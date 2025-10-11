@@ -1,15 +1,17 @@
 const express = require("express");
 const router = express.Router();
+const { createQuestion, updateQuestion, deleteQuestion } = require("../controllers/questionsController");
+const { verifyToken } = require("../middlewares/authMiddleware");
 
-// Kovakoodattu testidata (myöhemmin tulee MongoDB:stä)
-const testData = [
-  { id: 1, text: "Mikä on 2 + 2?", options: ["3", "4", "5"], correct: "4" },
-  { id: 2, text: "Mikä on Suomen pääkaupunki?", options: ["Helsinki", "Tampere", "Turku"], correct: "Helsinki" }
-];
-
-// GET /api/questions
+// GET: aiemmin luotu testidata / kaikki kysymykset → jätä se myös tähän
 router.get("/", (req, res) => {
-  res.json(testData);
+  res.json([{ text: "Demo question", options: ["A", "B"], correct: "A" }]);
 });
 
+// Admin CRUD
+router.post("/", verifyToken, createQuestion);
+router.put("/:id", verifyToken, updateQuestion);
+router.delete("/:id", verifyToken, deleteQuestion);
+
 module.exports = router;
+

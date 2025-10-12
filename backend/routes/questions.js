@@ -1,15 +1,21 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
+const authMiddleware = require('../middlewares/authMiddleware');
+const {
+  getAllQuestions,
+  getQuestionById,
+  createQuestion,
+  updateQuestion,
+  deleteQuestion
+} = require('../controllers/questionsController');
 
-// Kovakoodattu testidata (myöhemmin tulee MongoDB:stä)
-const testData = [
-  { id: 1, text: "Mikä on 2 + 2?", options: ["3", "4", "5"], correct: "4" },
-  { id: 2, text: "Mikä on Suomen pääkaupunki?", options: ["Helsinki", "Tampere", "Turku"], correct: "Helsinki" }
-];
+// Julkiset reitit (harjoittelijalle)
+router.get('/', getAllQuestions);
+router.get('/:id', getQuestionById);
 
-// GET /api/questions
-router.get("/", (req, res) => {
-  res.json(testData);
-});
+// Suojatut reitit (vain adminille)
+router.post('/', authMiddleware, createQuestion);
+router.put('/:id', authMiddleware, updateQuestion);
+router.delete('/:id', authMiddleware, deleteQuestion);
 
 module.exports = router;

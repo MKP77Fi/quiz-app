@@ -1,11 +1,27 @@
+// backend/routes/questions.js
+
 const express = require("express");
 const router = express.Router();
-const { createQuestion, updateQuestion, deleteQuestion } = require("../controllers/questionsController");
+const {
+  createQuestion,
+  updateQuestion,
+  deleteQuestion,
+} = require("../controllers/questionsController");
 const { verifyToken } = require("../middlewares/authMiddleware");
+const Question = require("../models/Question");
 
-// GET: aiemmin luotu testidata / kaikki kysymykset → jätä se myös tähän
-router.get("/", (req, res) => {
-  res.json([{ text: "Demo question", options: ["A", "B"], correct: "A" }]);
+// ✅ Hae kaikki kysymykset tietokannasta
+router.get("/", async (req, res) => {
+  try {
+    const questions = await Question.find();
+    res.json(questions);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Virhe haettaessa kysymyksiä",
+      error: error.message,
+    });
+  }
 });
 
 // Admin CRUD
@@ -14,4 +30,3 @@ router.put("/:id", verifyToken, updateQuestion);
 router.delete("/:id", verifyToken, deleteQuestion);
 
 module.exports = router;
-

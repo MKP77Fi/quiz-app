@@ -1,0 +1,48 @@
+{
+  "info": {
+    "_postman_id": "e5f4b123-5678-4a9f-93b4-789a12345678",
+    "name": "TSWGroup API Tests - Updated",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔐 Admin Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+        },
+        "url": { "raw": "http://localhost:3000/api/auth/login" }
+      }
+    },
+    {
+      "name": "👤 Harjoittelija Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"harjoittelija\",\n  \"password\": \"testi123\"\n}"
+        },
+        "url": { "raw": "http://localhost:3000/api/auth/login" }
+      }
+    },
+    {
+      "name": "📋 GET Questions (Token required)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "http://localhost:3000/api/questions" }
+      }
+    }
+  ]
+}

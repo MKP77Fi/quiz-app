@@ -1,3 +1,4 @@
+// controllers/authController.js
 const jwt = require("jsonwebtoken");
 
 const users = [
@@ -5,16 +6,19 @@ const users = [
   { username: "harjoittelija", password: "testi123", role: "user" }
 ];
 
-const SECRET_KEY = "salainen_avain";
+const SECRET_KEY = process.env.JWT_SECRET || "salainen_avain";
 
-const login = (req, res) => {
+// Kirjautumisfunktio
+exports.login = (req, res) => {
   const { username, password } = req.body;
   const user = users.find(
     (u) => u.username === username && u.password === password
   );
 
   if (!user) {
-    return res.status(401).json({ message: "Virheellinen käyttäjätunnus tai salasana" });
+    return res
+      .status(401)
+      .json({ message: "Virheellinen käyttäjätunnus tai salasana" });
   }
 
   const token = jwt.sign(
@@ -23,7 +27,10 @@ const login = (req, res) => {
     { expiresIn: "1h" }
   );
 
-  res.json({ token });
+  res.json({
+    success: true,
+    token,
+    role: user.role,
+    message: "Kirjautuminen onnistui"
+  });
 };
-
-module.exports = { login };

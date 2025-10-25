@@ -1,94 +1,103 @@
 # 🧠 TSW Group – Ajolupaharjoittelu-sovellus
 
-Tämä projekti on osa Taitotalon ohjelmistokehityksen näyttöä ja on toteutettu yhteistyössä **TSW Group Oy:n** kanssa.  
-Sovellus tarjoaa harjoitteluympäristön taksinkuljettajan ajolupakokeen kirjalliseen osioon valmistautuville työnhakijoille.  
-Tavoitteena on helpottaa kokeeseen valmistautumista ja varmistaa, että työnhakijat pääsevät virallisesta ajolupakokeesta läpi mahdollisimman tehokkaasti.
+Tämä projekti on interaktiivinen **verkkopohjainen tentti- ja harjoittelusovellus**, joka on toteutettu osana Taitotalon ohjelmistokehityskoulutusta.  
+Sovelluksen tarkoituksena on tarjota harjoittelijoille ja opettajille alusta kysymysten hallintaan, tenttien suorittamiseen ja tulosten seuraamiseen.
 
 ---
 
-## 📋 Projektin rakenne
+## 📋 Kokonaisrakenne
+
+Sovellus on toteutettu kaksiosaisena kokonaisuutena:
+
+| Osa | Teknologia | Kuvaus |
+|------|-------------|--------|
+| **Backend** | Node.js + Express + MongoDB | Vastaa tietokantayhteyksistä, käyttäjien autentikoinnista ja API-rajapinnoista |
+| **Frontend** | React (Vite) | Käyttöliittymä, jossa käyttäjä kirjautuu, valitsee tilan ja suorittaa tentin tai harjoittelun |
+
+---
+
+## ⚙️ Projektin rakenne
 
 quiz-app/
 │
-├─ backend/ # Palvelin, API ja tietokantayhteys
-│ ├─ routes/ # API-reitit (auth, questions)
-│ ├─ controllers/ # Sovelluslogiikka
-│ ├─ models/ # Mongoose-mallit
-│ └─ server.js # Käynnistyspiste
+├── backend/ # Node.js + Express + MongoDB
+│ ├── routes/ # Rajapinnat
+│ ├── controllers/ # Sovelluslogiikka
+│ ├── models/ # Tietokantamallit
+│ └── middleware/ # JWT-tarkistus
 │
-├─ frontend/ # Käyttöliittymä (HTML, CSS, JS)
+├── frontend/ # React + Vite
+│ ├── src/
+│ │ ├── components/
+│ │ │ ├── LoginView.jsx
+│ │ │ ├── ModeSelector.jsx
+│ │ │ ├── PracticeView.jsx
+│ │ │ ├── QuizView.jsx
+│ │ │ └── AdminView.jsx
+│ │ └── main.jsx
+│ └── package.json
 │
-└─ README.md # Tämä tiedosto
+├── .env.example # Malli ympäristömuuttujille
+├── README.md # Tämä tiedosto
+└── docs/ # Dokumentaatio (määrittely, arkkitehtuuri, toteutus)
 
-
----
-
-## ⚙️ Teknologiat
-
-- **Node.js + Express** — palvelin ja API  
-- **MongoDB Atlas + Mongoose** — tietokanta ja tietomalli  
-- **HTML / CSS / JavaScript** — käyttöliittymä  
-- **JWT (JSON Web Token)** — admin-autentikointi  
-- **GitHub** — versionhallinta  
-- **Vercel (demo)** — julkaisualusta  
+yaml
+Kopioi koodi
 
 ---
 
-## 🚀 Projektin tila
+## 🧩 Toiminnot lyhyesti
 
-✅ Suunnitteluvaihe valmis  
-✅ Määrittelydokumentti laadittu  
-✅ Arkkitehtuuri toteutettu  
-✅ Backend toimii (CRUD + Auth + MongoDB-yhteys)  
-🔄 Frontendin kehitys käynnissä  
-🔜 Käyttöliittymän integrointi ja testaus  
+### 🔐 Kirjautuminen
+- Käyttäjä tunnistetaan JWT-tokenilla
+- Käytettävissä kaksi roolia:
+  - **Admin** – hallintanäkymä kysymysten hallintaan  
+  - **Harjoittelija** – valitsee tentti- tai harjoittelutilan
 
----
+### 🧠 Tentti- ja harjoittelutila
+- **Tenttitila:** vastaukset eivät näy heti, lopuksi tuloskooste  
+- **Harjoittelutila:** näyttää heti, onko vastaus oikein  
+- Yksi kysymys kerrallaan, manuaalinen siirtyminen
 
-## 👥 Roolit
-
-- **Markus Prusi** – opiskelija, kehittäjä ja projektipäällikkö  
-- **Kamran Waheed (TSW Group Oy)** – asiakas, toimeksiantaja  
-- **Taitotalo** – koulutusorganisaatio ja arviointitaho  
-
----
-
-## 🧾 Dokumentaatio
-
-Projektin dokumentaatio löytyy `docs/`-kansiosta tai erillisistä tiedostoista:
-
-- Projektisuunnitelma  
-- Määrittelydokumentti  
-- Arkkitehtuurisuunnitelma  
-- Wireframet  
-- Toteutusdokumentti  
-- Testausraportit  
-- Käyttöohjeet ja julkaisuohje  
+### 💾 Kysymysten hallinta
+- Kysymykset tallennetaan MongoDB-tietokantaan  
+- Admin voi luoda, muokata ja poistaa kysymyksiä (CRUD)
 
 ---
 
-## 🛠️ Kehittäjille (lyhyt ohje)
+## 🧭 Käyttöönotto tiivistetysti
 
-Siirry `backend`-kansioon  
+1. **Backend**
    ```bash
    cd backend
+   npm install
+   npm start
+Luo tarvittaessa .env tiedosto (malli löytyy .env.example).
 
-Asenna riippuvuudet
+Frontend
 
+bash
+Kopioi koodi
+cd frontend
 npm install
+npm run dev
+Sovellus toimii oletuksena osoitteissa:
 
+Backend → http://localhost:3000
 
-Lisää .env-tiedosto seuraavalla sisällöllä:
+Frontend → http://localhost:5173
 
-MONGODB_URI=<MongoDB Atlas yhteysosoite>
-PORT=3000
-JWT_SECRET=<oma salainen avain>
+🧪 Testaus
+Kirjautumisen testaus Postmanilla (POST /api/auth/login)
 
+Tokenin tarkistus middlewarella
 
-Käynnistä palvelin
+Kysymysten haku (GET /api/questions)
 
-node server.js
+Frontendin toiminnan testaus selaimessa:
 
+Kirjautuminen (admin / harjoittelija)
 
-Avaa selaimessa:
-http://localhost:3000
+Tilavalinta ja kysymysten läpikäynti
+
+Uloskirjautuminen

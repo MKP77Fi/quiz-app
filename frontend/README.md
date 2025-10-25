@@ -1,68 +1,89 @@
 # 🧠 Quiz App – Frontend
 
-Tämä hakemisto sisältää sovelluksen käyttöliittymän, joka on rakennettu Reactilla (Vite).  
-Frontend hakee kysymykset backendin API:sta ja näyttää ne käyttäjälle joko harjoittelu- tai tenttitilassa.
+Tämä kansio sisältää Quiz-sovelluksen käyttöliittymän (frontend), joka on toteutettu **Reactilla** ja **Vite-kehitysympäristöllä**.  
+Frontend kommunikoi Node.js-pohjaisen backendin kanssa REST API -rajapinnan kautta.
 
-## 📁 Rakenne
+---
 
-frontend/
-├─ src/
-│ ├─ components/
-│ │ ├─ PracticeView.jsx # Harjoittelutila (palauttaa heti oikean vastauksen)
-│ │ └─ QuizView.jsx # Tenttitila (siirtyy automaattisesti seuraavaan kysymykseen)
-│ ├─ App.jsx # Pääsovellus, joka hallitsee näkymien välillä siirtymistä
-│ ├─ main.jsx # Käynnistää React-sovelluksen
-│ └─ index.css # Tyylit
-└─ vite.config.js # Kehityspalvelimen asetukset
+## 🚀 Käyttöönotto
 
-bash
-Kopioi koodi
-
-## ⚙️ Asennus ja käynnistys
-
-1. Siirry frontend-kansioon:
-   ```bash
-   cd frontend
-Asenna riippuvuudet:
-
-bash
-Kopioi koodi
+### 1. Asennus
+```bash
+cd frontend
 npm install
-Käynnistä kehityspalvelin:
-
+2. Käynnistys
 bash
 Kopioi koodi
 npm run dev
-Sovellus avautuu oletusarvoisesti osoitteeseen:
+Sovellus avautuu selaimessa osoitteessa:
+👉 http://localhost:5173
 
-arduino
+⚠️ Backendin tulee olla käynnissä osoitteessa http://localhost:3000, jotta API-yhteys toimii.
+
+🔐 Kirjautuminen ja roolit
+Sovellus sisältää kirjautumisen, jossa on kaksi eri käyttäjäroolia:
+
+Käyttäjä	Tunnus	Salasana	Näkymä
+Admin	admin	admin123	AdminView
+Harjoittelija	harjoittelija	testi123	ModeSelector (valinta tentti/harjoittelu)
+
+Token tallennetaan selaimen sessionStorage-muistiin kirjautumisen yhteydessä ja lähetetään API-kutsujen mukana.
+
+🧩 Rakenne
+bash
 Kopioi koodi
-http://localhost:5173
-🔹 Backendin tulee olla käynnissä osoitteessa http://localhost:3000, jotta API-yhteys toimii.
+frontend/
+│
+├── src/
+│   ├── App.jsx              # Sovelluksen pääkomponentti
+│   ├── main.jsx             # Käynnistyspiste
+│   ├── components/
+│   │   ├── LoginView.jsx    # Kirjautumissivu
+│   │   ├── ModeSelector.jsx # Valinta tentti / harjoittelu
+│   │   ├── PracticeView.jsx # Harjoittelutila
+│   │   ├── QuizView.jsx     # Tenttitila
+│   │   └── AdminView.jsx    # Admin-näkymä
+│   └── styles/              # (valinnainen) Tyylitiedostot
+│
+└── package.json
+⚙️ Toimintalogiikka
+Käyttäjä kirjautuu sisään (LoginView.jsx)
 
-🧠 Toiminnallisuus
-Hakee kysymykset API:sta (GET /api/questions).
+Token tallennetaan selaimen sessionStorage-muistiin
 
-Näyttää yhden kysymyksen kerrallaan.
+Admin ohjataan AdminView.jsx-näkymään
+Harjoittelija ohjataan ModeSelector.jsx-näkymään
 
-Tenttitila: siirtyy automaattisesti seuraavaan kysymykseen ja näyttää lopuksi tuloksen.
+ModeSelectorissa käyttäjä voi valita:
 
-Harjoittelutila: kertoo heti, oliko vastaus oikein, ja mahdollistaa siirtymisen seuraavaan kysymykseen.
+Harjoittelutila → PracticeView.jsx
+
+Tenttitila → QuizView.jsx
+
+Kysymykset haetaan backendin kautta (GET /api/questions)
 
 🧪 Testaus
-Varmista, että backend on käynnissä.
+Käynnistä ensin backend komennolla npm start
 
-Käynnistä frontend komennolla npm run dev.
+Käynnistä frontend komennolla npm run dev
 
-Avaa selain ja varmista, että kysymykset näkyvät.
+Kirjaudu sisään admin- tai harjoittelija-tunnuksilla
 
-Testaa molemmat tilat (harjoittelu ja tentti).
+Testaa, että:
 
-✅ Tilanne
-Perusrakenne luotu Viten kautta.
+Kirjautuminen toimii
 
-API-yhteys testattu ja toimii.
+Harjoittelutila antaa palautteen heti
 
-Toimivat komponentit harjoittelu- ja tenttitilalle.
+Tenttitila näyttää tuloksen vasta lopuksi
 
-Suunnitelma visuaalisen rakenteen ja pisteytyksen kehittämiseksi seuraavissa vaiheissa.
+Uloskirjautuminen toimii molemmissa näkymissä
+
+💡 Jatkokehitys
+Käyttäjän tulosten tallennus tietokantaan
+
+Adminin kysymysten hallintanäkymä (CRUD)
+
+Tyylien yhtenäistäminen Tailwindilla
+
+Responsiivisuuden ja saavutettavuuden parantaminen

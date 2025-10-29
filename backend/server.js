@@ -1,48 +1,39 @@
-// === Ladataan tarvittavat kirjastot ===
-const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, ".env") }); // Lataa .env tiedoston varmuudella
+// backend/server.js
+require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const mongoose = require("mongoose");
 
-// === Reitit ===
-const authRoutes = require("./routes/auth");
-const questionRoutes = require("./routes/questions");
+const authRoutes = require("./routes/auth"); // oletuksena jo olemassa
+const questionRoutes = require("./routes/questions"); // oletetaan olemassa
+const userRoutes = require("./routes/users");
 
-// === Sovelluksen asetukset ===
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// === Middlewaret ===
 app.use(bodyParser.json());
 app.use(cors());
 
-// === MongoDB-yhteyden muodostus ===
-const uri = process.env.MONGODB_URI;
-if (!uri) {
-  console.error("❌ MongoDB URI is not defined! Tarkista .env-tiedosto.");
+// Reitit
+app.use("/api/auth", authRoutes);
+app.use("/api/questions", questionRoutes);
+app.use("/api/users", userRoutes);
+
+// MongoDB yhteys
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
+if (!MONGO_URI) {
+  console.error("MONGODB_URI ei ole määritelty .env-tiedostossa!");
   process.exit(1);
 }
 
-mongoose
-  .connect(uri)
-  .then(() => console.log("✅ MongoDB connected"))
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log("MongoDB connected");
+    app.listen(PORT, () => {
+      console.log(`Server running at http://localhost:${PORT}`);
+    });
+  })
   .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-    process.exit(1);
+    console.error("MongoDB connection error:", err);
   });
-
-// === Perusreitit ===
-app.use("/api/auth", authRoutes);
-app.use("/api/questions", questionRoutes);
-
-// Testireitti
-app.get("/", (req, res) => {
-  res.send("Serveri toimii! 🚀");
-});
-
-// === Käynnistetään palvelin ===
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});

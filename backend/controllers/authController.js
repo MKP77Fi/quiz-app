@@ -1,20 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
-// Kovakoodatut käyttäjät (yksinkertaisuuden vuoksi)
-// Tulevaisuudessa nämä voidaan siirtää tietokantaan
-const users = [
-  {
-    username: 'admin',
-    password: '$2a$10$u2kpzQkBZpDwe28PF9qiT.tNAjH2rNG8hT223aAUeR6xerF7HME4C', 
-    role: 'admin'
-  },
-  {
-    username: 'harjoittelija',
-    password: '$2a$10$aQKiKlqhQBSAW4CJmBlWB.joBiV3X4558rKM7.PnU8kbVFptHgZ/a', 
-    role: 'trainee'
-  }
-];
+const User = require('../models/User');
 
 // POST /api/auth/login - Kirjautuminen
 const login = async (req, res) => {
@@ -28,12 +14,19 @@ const login = async (req, res) => {
       });
     }
 
-    // Etsi käyttäjä
-    const user = users.find(u => u.username === username);
+    // Etsi käyttäjä tietokannasta
+    const user = await User.findOne({ username });
     
     if (!user) {
       return res.status(401).json({ 
         error: 'Virheellinen käyttäjätunnus tai salasana' 
+      });
+    }
+
+    // Tarkista että käyttäjä on aktiivinen
+    if (!user.active) {
+      return res.status(403).json({ 
+        error: 'Käyttäjätili on poistettu käytöstä' 
       });
     }
 
@@ -56,6 +49,7 @@ const login = async (req, res) => {
 
     const token = jwt.sign(
       { 
+        userId: user._id,
         username: user.username, 
         role: user.role 
       },
@@ -67,6 +61,7 @@ const login = async (req, res) => {
       message: 'Kirjautuminen onnistui',
       token,
       user: {
+        id: user._id,
         username: user.username,
         role: user.role
       }

@@ -3,6 +3,7 @@ const express = require('express');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const questionsRoutes = require('./routes/questions');
+const usersRoutes = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +26,7 @@ connectDB();
 // Reitit
 app.use('/api/auth', authRoutes);
 app.use('/api/questions', questionsRoutes);
+app.use('/api/users', usersRoutes);
 
 // Testireitti
 app.get('/', (req, res) => {

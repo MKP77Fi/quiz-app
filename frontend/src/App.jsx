@@ -3,13 +3,15 @@ import Login from './components/Login'
 import AdminDashboard from './components/AdminDashboard'
 import TraineeDashboard from './components/TraineeDashboard'
 import QuizView from './components/QuizView'
+import UserManagement from './components/UserManagement'
+import QuestionManagement from './components/QuestionManagement'
 
 function App() {
   const [user, setUser] = useState(null)
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [view, setView] = useState('login') // 'login' | 'dashboard' | 'quiz'
+  const [view, setView] = useState('login') // 'login' | 'dashboard' | 'quiz' | 'users' | 'questions'
   const [quizMode, setQuizMode] = useState(null) // 'practice' | 'exam'
 
   // Tarkista onko käyttäjä jo kirjautunut (sessionStorage)
@@ -57,9 +59,18 @@ function App() {
     setView('quiz')
   }
 
-  const handleExitQuiz = () => {
+  const handleAdminNavigate = (destination) => {
+    setView(destination)
+  }
+
+  const handleBackToDashboard = () => {
     setView('dashboard')
     setQuizMode(null)
+    // Päivitä kysymykset kun palataan (jos niitä on muokattu)
+    fetch('http://localhost:3000/api/questions')
+      .then(response => response.json())
+      .then(data => setQuestions(data))
+      .catch(err => console.error('Virhe kysymysten päivityksessä:', err))
   }
 
   // Näytä loading-tila kun tarkistetaan sessionStorage
@@ -76,10 +87,26 @@ function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />
   }
 
+  // QUESTION MANAGEMENT -näkymä (vain adminille)
+  if (view === 'questions' && user?.role === 'admin') {
+    return <QuestionManagement onBack={handleBackToDashboard} />
+  }
+
+  // USER MANAGEMENT -näkymä (vain adminille)
+  if (view === 'users' && user?.role === 'admin') {
+    return <UserManagement onBack={handleBackToDashboard} />
+  }
+
   // DASHBOARD-näkymä
   if (view === 'dashboard') {
     if (user.role === 'admin') {
-      return <AdminDashboard user={user} onLogout={handleLogout} />
+      return (
+        <AdminDashboard
+          user={user}
+          onNavigate={handleAdminNavigate}
+          onLogout={handleLogout}
+        />
+      )
     } else {
       return (
         <TraineeDashboard
@@ -97,7 +124,7 @@ function App() {
       <QuizView
         questions={questions}
         mode={quizMode}
-        onExit={handleExitQuiz}
+        onExit={handleBackToDashboard}
       />
     )
   }

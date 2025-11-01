@@ -1,4 +1,4 @@
-function AdminDashboard({ user, onLogout }) {
+function AdminDashboard({ user, onNavigate, onLogout }) {
   return (
     <div style={{
       maxWidth: '600px',
@@ -15,7 +15,7 @@ function AdminDashboard({ user, onLogout }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <button
-          onClick={() => alert('Kysymysten hallinta tulossa ensi viikolla!')}
+          onClick={() => onNavigate('questions')}
           style={{
             padding: '1.5rem',
             fontSize: '1.2em',
@@ -34,7 +34,7 @@ function AdminDashboard({ user, onLogout }) {
         </button>
 
         <button
-          onClick={() => alert('Käyttäjätunnusten hallinta tulossa ensi viikolla!')}
+          onClick={() => onNavigate('users')}
           style={{
             padding: '1.5rem',
             fontSize: '1.2em',

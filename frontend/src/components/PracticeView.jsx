@@ -1,4 +1,6 @@
+// frontend/src/components/PracticeView.jsx
 import { useState, useEffect } from "react";
+import "../index.css";
 
 function PracticeView() {
   const [questions, setQuestions] = useState([]);
@@ -17,8 +19,8 @@ function PracticeView() {
       .catch((err) => console.error("Virhe ladattaessa kysymyksiä:", err));
   }, []);
 
-  if (loading) return <p>Ladataan kysymyksiä...</p>;
-  if (questions.length === 0) return <p>Ei kysymyksiä saatavilla.</p>;
+  if (loading) return <p className="text-center">Ladataan kysymyksiä...</p>;
+  if (questions.length === 0) return <p className="text-center">Ei kysymyksiä saatavilla.</p>;
 
   const currentQuestion = questions[currentIndex];
 
@@ -43,53 +45,59 @@ function PracticeView() {
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <h2>Harjoittelutila</h2>
-      <h3>{currentQuestion.questionText}</h3>
+    <div className="login-container">
+      <div className="panel" style={{ maxWidth: "700px" }}>
+        <h2 className="title">Harjoittelutila</h2>
 
-      <ul style={{ listStyleType: "none", padding: 0 }}>
-        {currentQuestion.options.map((opt, i) => (
-          <li
-            key={i}
-            onClick={() => handleAnswer(opt)}
-            style={{
-              cursor: "pointer",
-              padding: "8px",
-              backgroundColor: "#f0f0f0",
-              marginBottom: "6px",
-              borderRadius: "5px",
-              transition: "background-color 0.3s",
-            }}
-          >
-            {opt}
-          </li>
-        ))}
-      </ul>
+        <h3 style={{ color: "#f2f2f2", marginBottom: "24px" }}>
+          {currentQuestion.questionText}
+        </h3>
 
-      <p style={{ fontWeight: "bold", color: answeredCorrectly ? "green" : "red" }}>{feedback}</p>
+        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+          {currentQuestion.options.map((opt, i) => (
+            <li
+              key={i}
+              onClick={() => handleAnswer(opt)}
+              style={{
+                cursor: "pointer",
+                padding: "12px 16px",
+                marginBottom: "10px",
+                borderRadius: "8px",
+                backgroundColor: "#2a2a2a",
+                color: "#f2f2f2",
+                transition: "all 0.3s ease",
+              }}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "#FF5733")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "#2a2a2a")}
+            >
+              {opt}
+            </li>
+          ))}
+        </ul>
 
-      {answeredCorrectly && currentIndex < questions.length - 1 && (
-        <button
-          onClick={nextQuestion}
+        <p
+          className="feedback-text"
           style={{
-            marginTop: "15px",
-            padding: "10px 20px",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
+            marginTop: "20px",
+            fontWeight: "600",
+            color: answeredCorrectly ? "#1CB1CF" : "#ff4444",
           }}
         >
-          Seuraava kysymys
-        </button>
-      )}
-
-      {answeredCorrectly && currentIndex === questions.length - 1 && (
-        <p style={{ marginTop: "20px", fontWeight: "bold", color: "green" }}>
-          🎉 Olet suorittanut kaikki harjoituskysymykset!
+          {feedback}
         </p>
-      )}
+
+        {answeredCorrectly && currentIndex < questions.length - 1 && (
+          <button onClick={nextQuestion} className="button" style={{ marginTop: "20px" }}>
+            Seuraava kysymys
+          </button>
+        )}
+
+        {answeredCorrectly && currentIndex === questions.length - 1 && (
+          <p style={{ marginTop: "20px", color: "#1CB1CF", fontWeight: "bold" }}>
+            🎉 Olet suorittanut kaikki harjoituskysymykset!
+          </p>
+        )}
+      </div>
     </div>
   );
 }

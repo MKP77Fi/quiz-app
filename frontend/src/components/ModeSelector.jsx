@@ -1,71 +1,35 @@
+// frontend/src/components/ModeSelector.jsx
 import { useNavigate } from "react-router-dom";
+import "../index.css";
 
 function ModeSelector() {
   const navigate = useNavigate();
 
-  // Siirtyminen harjoittelutilaan
-  const goToPractice = () => {
-    navigate("/practice");
-  };
-
-  // Siirtyminen tenttitilaan
-  const goToQuiz = () => {
-    navigate("/quiz");
-  };
-
-  // Uloskirjautuminen
+  const goToPractice = () => navigate("/practice");
+  const goToQuiz = () => navigate("/quiz");
   const handleLogout = () => {
     sessionStorage.removeItem("token");
     navigate("/");
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h1>Valitse tila</h1>
+    <div className="login-container">
+      <div className="panel" style={{ maxWidth: "420px" }}>
+        <h1 className="title">Valitse tila</h1>
 
-      <div style={{ marginTop: "30px" }}>
-        <button
-          onClick={goToPractice}
-          style={{
-            margin: "10px",
-            padding: "10px 20px",
-            backgroundColor: "#4CAF50",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Harjoittelu
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <button onClick={goToPractice} className="button">
+            Harjoittelu
+          </button>
+          <button onClick={goToQuiz} className="button">
+            Tentti
+          </button>
+        </div>
 
-        <button
-          onClick={goToQuiz}
-          style={{
-            margin: "10px",
-            padding: "10px 20px",
-            backgroundColor: "#2196F3",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Tentti
-        </button>
-      </div>
-
-      <div style={{ marginTop: "40px" }}>
         <button
           onClick={handleLogout}
-          style={{
-            backgroundColor: "#f44336",
-            color: "white",
-            padding: "8px 16px",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
+          className="button button--danger"
+          style={{ marginTop: "32px" }}
         >
           Kirjaudu ulos
         </button>

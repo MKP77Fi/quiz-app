@@ -1,20 +1,16 @@
+// frontend/src/components/AdminView.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // 🔹 uusi
-import {
-  fetchQuestions,
-  addQuestion,
-  updateQuestion,
-  deleteQuestion,
-} from "../utils/api";
+import { useNavigate } from "react-router-dom";
+import { fetchQuestions, addQuestion, updateQuestion, deleteQuestion } from "../utils/api";
 import QuestionForm from "./QuestionForm";
 import QuestionList from "./QuestionList";
+import "../index.css";
 
 function AdminView() {
   const [questions, setQuestions] = useState([]);
   const [editingQuestion, setEditingQuestion] = useState(null);
-  const navigate = useNavigate(); // 🔹 navigointikoukku
+  const navigate = useNavigate();
 
-  // Hae kysymykset kun komponentti latautuu
   useEffect(() => {
     loadQuestions();
   }, []);
@@ -54,38 +50,35 @@ function AdminView() {
   };
 
   const logout = () => {
-    sessionStorage.clear(); // poistaa tokenin ja käyttäjän tiedot
-    navigate("/"); // 🔹 ohjaa takaisin kirjautumissivulle
+    sessionStorage.clear();
+    navigate("/");
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Admin-näkymä</h1>
-      <button
-        onClick={logout}
-        style={{
-          backgroundColor: "#d9534f",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          padding: "8px 12px",
-          marginBottom: "20px",
-          cursor: "pointer",
-        }}
-      >
-        Kirjaudu ulos
-      </button>
+    <div className="admin-dashboard">
+      <div className="admin-box">
+        <h1 className="title">Admin-näkymä</h1>
 
-      <QuestionForm
-        onSave={handleSave}
-        editingQuestion={editingQuestion}
-        cancelEdit={() => setEditingQuestion(null)}
-      />
-      <QuestionList
-        questions={questions}
-        onEdit={setEditingQuestion}
-        onDelete={handleDelete}
-      />
+        <div className="button-group">
+          <button className="button" onClick={() => alert("Tenttien hallinta tulossa!")}>
+            Hallinnoi tenttejä
+          </button>
+          <button className="button button--danger" onClick={logout}>
+            Kirjaudu ulos
+          </button>
+        </div>
+
+        <QuestionForm
+          onSave={handleSave}
+          editingQuestion={editingQuestion}
+          cancelEdit={() => setEditingQuestion(null)}
+        />
+        <QuestionList
+          questions={questions}
+          onEdit={setEditingQuestion}
+          onDelete={handleDelete}
+        />
+      </div>
     </div>
   );
 }

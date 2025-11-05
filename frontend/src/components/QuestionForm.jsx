@@ -1,4 +1,6 @@
+// frontend/src/components/QuestionForm.jsx
 import { useState, useEffect } from "react";
+import "../index.css";
 
 function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
   const [questionText, setQuestionText] = useState("");
@@ -6,7 +8,6 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [difficulty, setDifficulty] = useState("easy");
 
-  // Jos muokataan kysymystä, täytetään lomake sen tiedoilla
   useEffect(() => {
     if (editingQuestion) {
       setQuestionText(editingQuestion.questionText);
@@ -34,8 +35,10 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
-      <h3>{editingQuestion ? "Muokkaa kysymystä" : "Lisää uusi kysymys"}</h3>
+    <form onSubmit={handleSubmit} className="panel">
+      <h3 className="title" style={{ fontSize: "1.5rem", marginBottom: "20px" }}>
+        {editingQuestion ? "Muokkaa kysymystä" : "Lisää uusi kysymys"}
+      </h3>
 
       <label>Kysymysteksti:</label>
       <input
@@ -43,6 +46,7 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
         value={questionText}
         onChange={(e) => setQuestionText(e.target.value)}
         required
+        className="input"
       />
 
       <label>Vaihtoehdot:</label>
@@ -54,6 +58,7 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
           onChange={(e) => handleOptionChange(e.target.value, i)}
           placeholder={`Vaihtoehto ${i + 1}`}
           required
+          className="input"
         />
       ))}
 
@@ -63,26 +68,31 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
         value={correctAnswer}
         onChange={(e) => setCorrectAnswer(e.target.value)}
         required
+        className="input"
       />
 
       <label>Vaikeustaso:</label>
       <select
         value={difficulty}
         onChange={(e) => setDifficulty(e.target.value)}
+        className="input"
       >
         <option value="easy">Helppo</option>
         <option value="medium">Keskitaso</option>
         <option value="hard">Vaikea</option>
       </select>
 
-      <button type="submit">
-        {editingQuestion ? "Tallenna muutokset" : "Lisää kysymys"}
-      </button>
-      {editingQuestion && (
-        <button type="button" onClick={cancelEdit}>
-          Peruuta
+      <div className="button-group" style={{ marginTop: "15px" }}>
+        <button type="submit" className="button">
+          {editingQuestion ? "Tallenna muutokset" : "Lisää kysymys"}
         </button>
-      )}
+
+        {editingQuestion && (
+          <button type="button" onClick={cancelEdit} className="button button--danger">
+            Peruuta
+          </button>
+        )}
+      </div>
     </form>
   );
 }

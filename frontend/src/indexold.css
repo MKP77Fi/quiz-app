@@ -1,0 +1,207 @@
+/* ====== VARMISTETAAN, ETTÄ PADDING JA BORDER EIVÄT RIKO LEVEYKSIÄ ====== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ====== CSS-MUUTTUJAT (BRÄNDIN VÄRIT JA TYYLIT) ====== */
+:root {
+  --background: #1A1A1A;
+  --text-primary: #F2F2F2;
+  --text-light: #FFFFFF;
+  --accent-orange: #FF5733;
+  --accent-turquoise: #1CB1CF;
+  --border-subtle: rgba(242, 242, 242, 0.1);
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ====== PERUSRESET JA YLEINEN TYILI ====== */
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Varmistus: Barlow käytössä kaikkialla */
+body, button, input, select, textarea, a, p, span {
+  font-family: 'Barlow', sans-serif !important;
+}
+
+/* ====== TYPOGRAFIA ====== */
+h1, h2, h3 {
+  font-family: 'Racing Sans One', cursive;
+  color: var(--accent-orange);
+  margin-top: 0;
+}
+
+/* ====== HEADER ====== */
+.header {
+  background-color: #1a1a1a;
+  border-bottom: 1px solid rgba(242, 242, 242, 0.1);
+  height: 90px;
+  display: flex;
+  align-items: center;
+}
+
+.header-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Logo */
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-logo {
+  height: 100px;
+  width: auto;
+  object-fit: contain;
+  margin: 0;
+  padding: 0;
+}
+
+/* Oikean reunan linkki */
+.header-nav {
+  display: flex;
+  align-items: center;
+}
+
+.header-link {
+  font-family: 'Barlow', sans-serif;
+  color: #f2f2f2;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.3s ease;
+}
+
+.header-link:hover {
+  color: #ff5733;
+}
+
+/* ====== FOOTER ====== */
+.footer {
+  background-color: #1a1a1a;
+  border-top: 1px solid rgba(242, 242, 242, 0.1);
+  text-align: center;
+  padding: 16px 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-family: 'Barlow', sans-serif;
+  margin-top: auto;
+}
+
+/* ====== KIRJAUTUMISSIVU ====== */
+.login-container {
+  min-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #f2f2f2;
+  background-color: #1a1a1a;
+  padding: 40px 20px;
+}
+
+.login-title {
+  font-family: "Racing Sans One", cursive;
+  font-size: 2.5rem;
+  color: #ff5733;
+  margin-bottom: 40px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(255, 87, 51, 0.3);
+}
+
+.login-form {
+  background-color: #1e1e1e;
+  border: 1px solid rgba(242, 242, 242, 0.1);
+  border-radius: 16px;
+  padding: 40px 30px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-input,
+.login-button {
+  width: 100%;
+  display: block;
+}
+
+.login-input {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(242, 242, 242, 0.2);
+  background-color: transparent;
+  color: #1cb1cf;
+  font-size: 1rem;
+  font-family: "Barlow", sans-serif;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.login-input::placeholder {
+  color: rgba(200, 200, 200, 0.4);
+}
+
+.login-input:focus {
+  border-color: #1cb1cf;
+  box-shadow: 0 0 8px rgba(28, 177, 207, 0.4);
+}
+
+.login-button {
+  background-color: #ff5733;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: "Barlow", sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.login-button:hover {
+  background-color: #1cb1cf;
+  transform: scale(1.03);
+  box-shadow: 0 0 10px rgba(28, 177, 207, 0.4);
+}
+
+.login-error {
+  color: #ff4444;
+  font-size: 0.9rem;
+  margin-top: 10px;
+  font-family: "Barlow", sans-serif;
+}
+
+/* ====== RESPONSIIVISUUS ====== */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    height: auto;
+    padding: 1rem;
+  }
+  
+  .header-logo {
+    margin-bottom: 0.5rem;
+  }
+  
+  .header-container {
+    padding: 0 20px;
+  }
+}

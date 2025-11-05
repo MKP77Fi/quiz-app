@@ -1,20 +1,31 @@
 // frontend/src/components/UserList.jsx
+import "../index.css";
+
 function UserList({ users, onEdit, onDelete }) {
   return (
-    <div>
-      <h3>Käyttäjälista</h3>
+    <div className="list-container">
+      <h3 className="title" style={{ fontSize: "1.5rem", textAlign: "left" }}>
+        Käyttäjälista
+      </h3>
+
       {users.length === 0 ? (
         <p>Ei käyttäjiä.</p>
       ) : (
         <ul>
           {users.map((u) => (
-            <li key={u._id} style={{ marginBottom: "10px" }}>
+            <li key={u._id} className="list-item">
               <strong>{u.username}</strong> — <small>{u.role}</small>
-              <br />
-              <button onClick={() => onEdit(u)}>Muokkaa</button>
-              <button onClick={() => onDelete(u._id)} style={{ marginLeft: "8px" }}>
-                Poista
-              </button>
+              <div className="list-actions">
+                <button className="button" onClick={() => onEdit(u)}>
+                  Muokkaa
+                </button>
+                <button
+                  className="button button--danger"
+                  onClick={() => onDelete(u._id)}
+                >
+                  Poista
+                </button>
+              </div>
             </li>
           ))}
         </ul>

@@ -1,9 +1,10 @@
 // frontend/src/components/UserForm.jsx
 import { useState, useEffect } from "react";
+import "../index.css";
 
 function UserForm({ onSave, editingUser, cancelEdit }) {
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState(""); // tyhjä tarkoittaa "ei muutosta"
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState("user");
 
   useEffect(() => {
@@ -21,14 +22,15 @@ function UserForm({ onSave, editingUser, cancelEdit }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const payload = { username, role };
-    // Lähetetään salasana ainoastaan jos annettu
     if (password) payload.password = password;
     onSave(payload);
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
-      <h3>{editingUser ? "Muokkaa käyttäjää" : "Lisää uusi käyttäjä"}</h3>
+    <form onSubmit={handleSubmit} className="panel" style={{ marginBottom: "20px" }}>
+      <h3 className="title" style={{ fontSize: "1.5rem", marginBottom: "20px" }}>
+        {editingUser ? "Muokkaa käyttäjää" : "Lisää uusi käyttäjä"}
+      </h3>
 
       <label>Käyttäjätunnus</label>
       <input
@@ -36,6 +38,7 @@ function UserForm({ onSave, editingUser, cancelEdit }) {
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         required
+        className="input"
       />
 
       <label>Salasana {editingUser ? "(täytä vain jos haluat vaihtaa)" : ""}</label>
@@ -45,18 +48,21 @@ function UserForm({ onSave, editingUser, cancelEdit }) {
         onChange={(e) => setPassword(e.target.value)}
         placeholder={editingUser ? "Jätä tyhjäksi, jos ei vaihdu" : ""}
         {...(editingUser ? {} : { required: true })}
+        className="input"
       />
 
       <label>Rooli</label>
-      <select value={role} onChange={(e) => setRole(e.target.value)}>
+      <select value={role} onChange={(e) => setRole(e.target.value)} className="input">
         <option value="user">Harjoittelija</option>
         <option value="admin">Admin</option>
       </select>
 
-      <div style={{ marginTop: "10px" }}>
-        <button type="submit">{editingUser ? "Tallenna" : "Lisää käyttäjä"}</button>
+      <div className="button-group">
+        <button type="submit" className="button">
+          {editingUser ? "Tallenna" : "Lisää käyttäjä"}
+        </button>
         {editingUser && (
-          <button type="button" onClick={cancelEdit} style={{ marginLeft: "10px" }}>
+          <button type="button" onClick={cancelEdit} className="button button--danger">
             Peruuta
           </button>
         )}

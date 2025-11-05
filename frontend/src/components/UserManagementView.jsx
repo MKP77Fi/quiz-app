@@ -4,6 +4,7 @@ import { fetchUsers, addUser, updateUser, deleteUser } from "../utils/api";
 import UserForm from "./UserForm";
 import UserList from "./UserList";
 import { useNavigate } from "react-router-dom";
+import "../index.css";
 
 function UserManagementView() {
   const [users, setUsers] = useState([]);
@@ -20,24 +21,17 @@ function UserManagementView() {
       setUsers(data);
     } catch (err) {
       console.error("Käyttäjien haku epäonnistui:", err);
-      // Jos token ei kelpaa, ohjataan kirjautumiseen
-      if (err.message && err.message.toLowerCase().includes("401")) {
-        navigate("/");
-      }
+      if (err.message && err.message.toLowerCase().includes("401")) navigate("/");
     }
   };
 
   const handleSave = async (payload) => {
     try {
-      if (editingUser) {
-        await updateUser(editingUser._id, payload);
-      } else {
-        await addUser(payload);
-      }
+      if (editingUser) await updateUser(editingUser._id, payload);
+      else await addUser(payload);
       await loadUsers();
       setEditingUser(null);
     } catch (err) {
-      console.error("Käyttäjän tallennus epäonnistui:", err);
       alert(err.message || "Tallennus epäonnistui");
     }
   };
@@ -48,7 +42,6 @@ function UserManagementView() {
       await deleteUser(id);
       await loadUsers();
     } catch (err) {
-      console.error("Käyttäjän poisto epäonnistui:", err);
       alert("Poisto epäonnistui");
     }
   };
@@ -59,14 +52,23 @@ function UserManagementView() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Käyttäjähallinta</h1>
-      <button onClick={logout} style={{ marginBottom: "20px" }}>
-        Kirjaudu ulos
-      </button>
+    <div className="admin-dashboard">
+      <div className="admin-box" style={{ maxWidth: "600px" }}>
+        <h1 className="title">Käyttäjähallinta</h1>
 
-      <UserForm onSave={handleSave} editingUser={editingUser} cancelEdit={() => setEditingUser(null)} />
-      <UserList users={users} onEdit={setEditingUser} onDelete={handleDelete} />
+        <div className="button-group">
+          <button onClick={logout} className="button button--danger">
+            Kirjaudu ulos
+          </button>
+        </div>
+
+        <UserForm
+          onSave={handleSave}
+          editingUser={editingUser}
+          cancelEdit={() => setEditingUser(null)}
+        />
+        <UserList users={users} onEdit={setEditingUser} onDelete={handleDelete} />
+      </div>
     </div>
   );
 }

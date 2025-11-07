@@ -7,7 +7,6 @@ function UserManagement({ onBack }) {
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   
-  // Lomakkeen tiedot
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -15,7 +14,6 @@ function UserManagement({ onBack }) {
     active: true
   })
 
-  // Hae käyttäjät
   useEffect(() => {
     fetchUsers()
   }, [])
@@ -61,7 +59,6 @@ function UserManagement({ onBack }) {
       
       const method = editingUser ? 'PUT' : 'POST'
 
-      // Jos muokataan eikä salasanaa anneta, älä lähetä sitä
       const bodyData = { ...formData }
       if (editingUser && !formData.password) {
         delete bodyData.password
@@ -138,294 +135,185 @@ function UserManagement({ onBack }) {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '2rem' }}>
-        <h2>Ladataan käyttäjiä...</h2>
+      <div className="page-wrapper">
+        <div className="container text-center">
+          <h2>Ladataan käyttäjiä...</h2>
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div style={{ textAlign: 'center', padding: '2rem', color: 'red' }}>
-        <h2>Virhe: {error}</h2>
-        <button onClick={onBack} style={{
-          marginTop: '1rem',
-          padding: '0.75rem 1.5rem',
-          background: '#007bff',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer'
-        }}>
-          Takaisin
-        </button>
+      <div className="page-wrapper">
+        <div className="container text-center">
+          <div className="form-error">{error}</div>
+          <button onClick={onBack} className="btn btn-primary mt-md">
+            Takaisin
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div style={{
-      maxWidth: '1000px',
-      margin: '2rem auto',
-      padding: '2rem'
-    }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '2rem'
-      }}>
-        <h1>Käyttäjien hallinta</h1>
-        <button
-          onClick={onBack}
-          style={{
-            padding: '0.75rem 1.5rem',
-            background: '#6c757d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          ← Takaisin
-        </button>
-      </div>
-
-      {/* Lisää uusi käyttäjä -nappi */}
-      {!showForm && (
-        <button
-          onClick={() => setShowForm(true)}
-          style={{
-            padding: '0.75rem 1.5rem',
-            marginBottom: '2rem',
-            background: '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          + Lisää uusi käyttäjä
-        </button>
-      )}
-
-      {/* LOMAKE */}
-      {showForm && (
-        <div style={{
-          background: 'white',
-          padding: '2rem',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          marginBottom: '2rem'
-        }}>
-          <h2>{editingUser ? 'Muokkaa käyttäjää' : 'Lisää uusi käyttäjä'}</h2>
-          
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                Käyttäjätunnus *
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                required
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  fontSize: '1em',
-                  border: '2px solid #ddd',
-                  borderRadius: '8px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                Salasana {editingUser && '(jätä tyhjäksi jos et halua vaihtaa)'}
-              </label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                required={!editingUser}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  fontSize: '1em',
-                  border: '2px solid #ddd',
-                  borderRadius: '8px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                Rooli
-              </label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleInputChange}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  fontSize: '1em',
-                  border: '2px solid #ddd',
-                  borderRadius: '8px',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <option value="trainee">Harjoittelija</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  name="active"
-                  checked={formData.active}
-                  onChange={handleInputChange}
-                  style={{ marginRight: '0.5rem', width: '20px', height: '20px' }}
-                />
-                <span style={{ fontWeight: 'bold' }}>Käyttäjä aktiivinen</span>
-              </label>
-            </div>
-
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button
-                type="submit"
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  background: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                {editingUser ? 'Tallenna muutokset' : 'Luo käyttäjä'}
-              </button>
-              
-              <button
-                type="button"
-                onClick={handleCancel}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  background: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer'
-                }}
-              >
-                Peruuta
-              </button>
-            </div>
-          </form>
+    <div className="page-wrapper">
+      <div className="container" style={{ maxWidth: '1000px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
+          <h1>Käyttäjien hallinta</h1>
+          <button onClick={onBack} className="btn btn-secondary">
+            ← Takaisin
+          </button>
         </div>
-      )}
 
-      {/* KÄYTTÄJÄLISTA */}
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        overflow: 'hidden'
-      }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f8f9fa' }}>
-              <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>
-                Käyttäjätunnus
-              </th>
-              <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>
-                Rooli
-              </th>
-              <th style={{ padding: '1rem', textAlign: 'center', borderBottom: '2px solid #dee2e6' }}>
-                Status
-              </th>
-              <th style={{ padding: '1rem', textAlign: 'center', borderBottom: '2px solid #dee2e6' }}>
-                Toiminnot
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user._id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                <td style={{ padding: '1rem' }}>{user.username}</td>
-                <td style={{ padding: '1rem' }}>
-                  <span style={{
-                    padding: '0.25rem 0.75rem',
-                    background: user.role === 'admin' ? '#007bff' : '#28a745',
-                    color: 'white',
-                    borderRadius: '12px',
-                    fontSize: '0.85em'
-                  }}>
-                    {user.role === 'admin' ? 'Admin' : 'Harjoittelija'}
-                  </span>
-                </td>
-                <td style={{ padding: '1rem', textAlign: 'center' }}>
-                  <span style={{
-                    padding: '0.25rem 0.75rem',
-                    background: user.active ? '#d4edda' : '#f8d7da',
-                    color: user.active ? '#155724' : '#721c24',
-                    borderRadius: '12px',
-                    fontSize: '0.85em'
-                  }}>
-                    {user.active ? 'Aktiivinen' : 'Ei aktiivinen'}
-                  </span>
-                </td>
-                <td style={{ padding: '1rem', textAlign: 'center' }}>
-                  <button
-                    onClick={() => handleEdit(user)}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      marginRight: '0.5rem',
-                      background: '#ffc107',
-                      color: '#000',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.9em'
-                    }}
-                  >
-                    Muokkaa
-                  </button>
-                  <button
-                    onClick={() => handleDelete(user._id)}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      background: '#dc3545',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.9em'
-                    }}
-                  >
-                    Poista
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Lisää uusi käyttäjä -nappi */}
+        {!showForm && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="btn btn-primary mb-md"
+          >
+            + Lisää uusi käyttäjä
+          </button>
+        )}
 
-        {users.length === 0 && (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
-            Ei käyttäjiä
+        {/* LOMAKE */}
+        {showForm && (
+          <div className="card mb-lg">
+            <h2>{editingUser ? 'Muokkaa käyttäjää' : 'Lisää uusi käyttäjä'}</h2>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label className="form-label">Käyttäjätunnus *</label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  required
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  Salasana {editingUser && '(jätä tyhjäksi jos et halua vaihtaa)'}
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required={!editingUser}
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Rooli</label>
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  className="form-select"
+                >
+                  <option value="trainee">Harjoittelija</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-check-label">
+                  <input
+                    type="checkbox"
+                    name="active"
+                    checked={formData.active}
+                    onChange={handleInputChange}
+                    className="form-checkbox"
+                  />
+                  Käyttäjä aktiivinen
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+                <button type="submit" className="btn btn-primary">
+                  {editingUser ? 'Tallenna muutokset' : 'Luo käyttäjä'}
+                </button>
+                
+                <button type="button" onClick={handleCancel} className="btn btn-secondary">
+                  Peruuta
+                </button>
+              </div>
+            </form>
           </div>
         )}
+
+        {/* KÄYTTÄJÄLISTA */}
+        <div className="card">
+          <h2>Käyttäjät ({users.length})</h2>
+          
+          {users.length === 0 ? (
+            <p className="text-center" style={{ color: 'var(--text-primary)', opacity: 0.6 }}>
+              Ei käyttäjiä
+            </p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 'var(--spacing-md)' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border-subtle)' }}>
+                    <th style={{ padding: 'var(--spacing-sm)', textAlign: 'left', color: 'var(--accent-orange)' }}>Käyttäjätunnus</th>
+                    <th style={{ padding: 'var(--spacing-sm)', textAlign: 'left', color: 'var(--accent-orange)' }}>Rooli</th>
+                    <th style={{ padding: 'var(--spacing-sm)', textAlign: 'center', color: 'var(--accent-orange)' }}>Status</th>
+                    <th style={{ padding: 'var(--spacing-sm)', textAlign: 'center', color: 'var(--accent-orange)' }}>Toiminnot</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user._id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <td style={{ padding: 'var(--spacing-sm)' }}>{user.username}</td>
+                      <td style={{ padding: 'var(--spacing-sm)' }}>
+                        <span style={{
+                          padding: '0.25rem 0.75rem',
+                          backgroundColor: user.role === 'admin' ? 'var(--accent-turquoise)' : '#28a745',
+                          color: 'var(--text-light)',
+                          borderRadius: 'var(--border-radius)',
+                          fontSize: '0.85rem'
+                        }}>
+                          {user.role === 'admin' ? 'Admin' : 'Harjoittelija'}
+                        </span>
+                      </td>
+                      <td style={{ padding: 'var(--spacing-sm)', textAlign: 'center' }}>
+                        <span style={{
+                          padding: '0.25rem 0.75rem',
+                          backgroundColor: user.active ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)',
+                          color: user.active ? '#28a745' : '#dc3545',
+                          borderRadius: 'var(--border-radius)',
+                          fontSize: '0.85rem'
+                        }}>
+                          {user.active ? 'Aktiivinen' : 'Ei aktiivinen'}
+                        </span>
+                      </td>
+                      <td style={{ padding: 'var(--spacing-sm)', textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleEdit(user)}
+                          className="btn btn-warning btn-sm"
+                          style={{ marginRight: 'var(--spacing-xs)' }}
+                        >
+                          Muokkaa
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user._id)}
+                          className="btn btn-danger btn-sm"
+                        >
+                          Poista
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

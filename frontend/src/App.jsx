@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Header from './components/Header'
 import Login from './components/Login'
 import AdminDashboard from './components/AdminDashboard'
 import TraineeDashboard from './components/TraineeDashboard'
@@ -76,69 +77,72 @@ function App() {
   // Näytä loading-tila kun tarkistetaan sessionStorage
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '2rem' }}>
-        <h2>Ladataan...</h2>
+      <div className="page-wrapper">
+        <div className="container text-center">
+          <h2>Ladataan...</h2>
+        </div>
       </div>
     )
   }
 
-  // LOGIN-näkymä
+  // LOGIN-näkymä (ei headeria)
   if (view === 'login') {
     return <Login onLoginSuccess={handleLoginSuccess} />
   }
 
-  // QUESTION MANAGEMENT -näkymä (vain adminille)
-  if (view === 'questions' && user?.role === 'admin') {
-    return <QuestionManagement onBack={handleBackToDashboard} />
-  }
+  // Muut näkymät (headerilla)
+  return (
+    <>
+      <Header user={user} onLogout={handleLogout} />
+      
+      {/* QUESTION MANAGEMENT -näkymä (vain adminille) */}
+      {view === 'questions' && user?.role === 'admin' && (
+        <QuestionManagement onBack={handleBackToDashboard} />
+      )}
 
-  // USER MANAGEMENT -näkymä (vain adminille)
-  if (view === 'users' && user?.role === 'admin') {
-    return <UserManagement onBack={handleBackToDashboard} />
-  }
+      {/* USER MANAGEMENT -näkymä (vain adminille) */}
+      {view === 'users' && user?.role === 'admin' && (
+        <UserManagement onBack={handleBackToDashboard} />
+      )}
 
-  // DASHBOARD-näkymä
-  if (view === 'dashboard') {
-    if (user.role === 'admin') {
-      return (
-        <AdminDashboard
-          user={user}
-          onNavigate={handleAdminNavigate}
-          onLogout={handleLogout}
+      {/* DASHBOARD-näkymä */}
+      {view === 'dashboard' && (
+        <>
+          {user.role === 'admin' ? (
+            <AdminDashboard
+              user={user}
+              onNavigate={handleAdminNavigate}
+              onLogout={handleLogout}
+            />
+          ) : (
+            <TraineeDashboard
+              user={user}
+              onModeSelect={handleModeSelect}
+              onLogout={handleLogout}
+            />
+          )}
+        </>
+      )}
+
+      {/* QUIZ-näkymä */}
+      {view === 'quiz' && questions.length > 0 && (
+        <QuizView
+          questions={questions}
+          mode={quizMode}
+          onExit={handleBackToDashboard}
         />
-      )
-    } else {
-      return (
-        <TraineeDashboard
-          user={user}
-          onModeSelect={handleModeSelect}
-          onLogout={handleLogout}
-        />
-      )
-    }
-  }
+      )}
 
-  // QUIZ-näkymä
-  if (view === 'quiz' && questions.length > 0) {
-    return (
-      <QuizView
-        questions={questions}
-        mode={quizMode}
-        onExit={handleBackToDashboard}
-      />
-    )
-  }
-
-  // Virhetila
-  if (error) {
-    return (
-      <div style={{ textAlign: 'center', padding: '2rem', color: 'red' }}>
-        <h2>Virhe: {error}</h2>
-      </div>
-    )
-  }
-
-  return null
+      {/* Virhetila */}
+      {error && view !== 'login' && (
+        <div className="page-wrapper">
+          <div className="container text-center">
+            <div className="form-error">{error}</div>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
 
 export default App

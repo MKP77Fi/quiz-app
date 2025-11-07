@@ -1,73 +1,58 @@
 function TraineeDashboard({ user, onModeSelect, onLogout }) {
   return (
-    <div style={{
-      maxWidth: '600px',
-      margin: '4rem auto',
-      padding: '2rem',
-      textAlign: 'center'
-    }}>
-      <h1 style={{ marginBottom: '1rem' }}>
-        Tervetuloa, {user.username}!
-      </h1>
-      <p style={{ color: '#666', marginBottom: '3rem' }}>
-        Valitse harjoittelutapa
-      </p>
+    <div className="page-wrapper">
+      <div className="container" style={{ maxWidth: '600px' }}>
+        <div className="text-center mb-lg">
+          <h1>Tervetuloa, {user.username}!</h1>
+          <p style={{ color: 'var(--text-primary)', opacity: 0.8 }}>
+            Valitse harjoittelutapa
+          </p>
+        </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <button
-          onClick={() => onModeSelect('practice')}
-          style={{
-            padding: '1.5rem',
-            fontSize: '1.2em',
-            background: '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          🎓 Harjoittele kysymyksiä
-          <div style={{ fontSize: '0.8em', marginTop: '0.5rem', fontWeight: 'normal' }}>
-            Saat välitöntä palautetta vastauksistasi
-          </div>
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+          <button
+            onClick={() => onModeSelect('practice')}
+            className="card"
+            style={{
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+              padding: 'var(--spacing-lg)',
+              transition: 'all var(--transition-normal)'
+            }}
+          >
+            <div style={{ fontSize: '2rem', marginBottom: 'var(--spacing-sm)' }}>🎓</div>
+            <h3 style={{ marginBottom: 'var(--spacing-xs)' }}>Harjoittele kysymyksiä</h3>
+            <p style={{ color: 'var(--text-primary)', opacity: 0.8, margin: 0, fontSize: '0.9rem' }}>
+              Saat välitöntä palautetta vastauksistasi
+            </p>
+          </button>
 
-        <button
-          onClick={() => onModeSelect('exam')}
-          style={{
-            padding: '1.5rem',
-            fontSize: '1.2em',
-            background: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          📝 Aloita harjoitustentti
-          <div style={{ fontSize: '0.8em', marginTop: '0.5rem', fontWeight: 'normal' }}>
-            Vastaa kaikkiin kysymyksiin, tulos lopuksi
-          </div>
-        </button>
+          <button
+            onClick={() => onModeSelect('exam')}
+            className="card"
+            style={{
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+              padding: 'var(--spacing-lg)',
+              transition: 'all var(--transition-normal)'
+            }}
+          >
+            <div style={{ fontSize: '2rem', marginBottom: 'var(--spacing-sm)' }}>📝</div>
+            <h3 style={{ marginBottom: 'var(--spacing-xs)' }}>Aloita harjoitustentti</h3>
+            <p style={{ color: 'var(--text-primary)', opacity: 0.8, margin: 0, fontSize: '0.9rem' }}>
+              Vastaa kaikkiin kysymyksiin, tulos lopuksi
+            </p>
+          </button>
+        </div>
+
+        <div className="text-center mt-lg">
+          <button onClick={() => onLogout()} className="btn btn-danger">
+            Kirjaudu ulos
+          </button>
+        </div>
       </div>
-
-      <button
-        onClick={() => onLogout()}
-        style={{
-          marginTop: '2rem',
-          padding: '0.75rem 1.5rem',
-          background: 'white',
-          color: '#dc3545',
-          border: '2px solid #dc3545',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontWeight: 'bold'
-        }}
-      >
-        Kirjaudu ulos
-      </button>
     </div>
   )
 }

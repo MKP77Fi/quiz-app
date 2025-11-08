@@ -45,6 +45,24 @@ function AdminDashboard({ user, onNavigate, onLogout }) {
               Muokkaa salasanoja ja käyttöoikeuksia
             </p>
           </button>
+
+          <button
+            onClick={() => onNavigate('exam-settings')}
+            className="card"
+            style={{
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+              padding: 'var(--spacing-lg)',
+              transition: 'all var(--transition-normal)'
+            }}
+          >
+            <div style={{ fontSize: '2rem', marginBottom: 'var(--spacing-sm)' }}>⚙️</div>
+            <h3 style={{ marginBottom: 'var(--spacing-xs)' }}>Tenttiasetukset</h3>
+            <p style={{ color: 'var(--text-primary)', opacity: 0.8, margin: 0, fontSize: '0.9rem' }}>
+              Määritä kysymysmäärä ja aikaraja
+            </p>
+          </button>
         </div>
 
         <div className="text-center mt-lg">

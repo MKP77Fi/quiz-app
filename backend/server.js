@@ -4,6 +4,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const questionsRoutes = require('./routes/questions');
 const usersRoutes = require('./routes/users');
+const examSettingsRoutes = require('./routes/examSettings'); // ← UUSI
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS (jos frontend on eri portissa)
+// CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -27,6 +28,7 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/questions', questionsRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/exam-settings', examSettingsRoutes); // ← UUSI
 
 // Testireitti
 app.get('/', (req, res) => {

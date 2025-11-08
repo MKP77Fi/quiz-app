@@ -6,13 +6,14 @@ import TraineeDashboard from './components/TraineeDashboard'
 import QuizView from './components/QuizView'
 import UserManagement from './components/UserManagement'
 import QuestionManagement from './components/QuestionManagement'
+import ExamSettings from './components/ExamSettings'
 
 function App() {
   const [user, setUser] = useState(null)
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [view, setView] = useState('login') // 'login' | 'dashboard' | 'quiz' | 'users' | 'questions'
+  const [view, setView] = useState('login') // 'login' | 'dashboard' | 'quiz' | 'users' | 'questions' | 'exam-settings'
   const [quizMode, setQuizMode] = useState(null) // 'practice' | 'exam'
 
   // Tarkista onko käyttäjä jo kirjautunut (sessionStorage)
@@ -95,6 +96,11 @@ function App() {
     <>
       <Header user={user} onLogout={handleLogout} />
       
+      {/* EXAM SETTINGS -näkymä (vain adminille) */}
+      {view === 'exam-settings' && user?.role === 'admin' && (
+        <ExamSettings onBack={handleBackToDashboard} />
+      )}
+
       {/* QUESTION MANAGEMENT -näkymä (vain adminille) */}
       {view === 'questions' && user?.role === 'admin' && (
         <QuestionManagement onBack={handleBackToDashboard} />

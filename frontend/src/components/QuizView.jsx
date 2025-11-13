@@ -1,6 +1,14 @@
-// frontend/src/components/QuizView.jsx
 import { useState, useEffect } from "react";
-import "../index.css";
+import { useNavigate } from "react-router-dom"; // ✅ uusi import
+
+function shuffleArray(array) {
+  const newArr = [...array];
+  for (let i = newArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+  }
+  return newArr;
+}
 
 function QuizView() {
   const [questions, setQuestions] = useState([]);
@@ -8,85 +16,145 @@ function QuizView() {
   const [loading, setLoading] = useState(true);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [error, setError] = useState("");
+  const [settings, setSettings] = useState({ questionLimit: 10, timeLimit: 300 });
+
+  const navigate = useNavigate(); // ✅ lisätty
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/questions")
-      .then((res) => res.json())
-      .then((data) => {
-        setQuestions(data);
+    const fetchQuizData = async () => {
+      try {
+        const [settingsRes, questionsRes] = await Promise.all([
+          fetch("http://localhost:3000/api/settings"),
+          fetch("http://localhost:3000/api/questions"),
+        ]);
+
+        const settingsData = settingsRes.ok
+          ? await settingsRes.json()
+          : { questionLimit: 10, timeLimit: 300 };
+
+        const questionsData = await questionsRes.json();
+
+        const randomized = shuffleArray(questionsData)
+          .slice(0, settingsData.questionLimit || 10)
+          .map((q) => ({ ...q, options: shuffleArray(q.options) }));
+
+        setQuestions(randomized);
+        setSettings(settingsData);
+        setTimeLeft(settingsData.timeLimit || 300);
         setLoading(false);
-      })
-      .catch((err) => console.error("Virhe ladattaessa kysymyksiä:", err));
+      } catch (err) {
+        console.error("Virhe ladattaessa tenttidataa:", err);
+        setError("Virhe tietojen latauksessa. Yritä myöhemmin uudelleen.");
+        setLoading(false);
+      }
+    };
+    fetchQuizData();
   }, []);
 
-  if (loading) return <p className="text-center">Ladataan kysymyksiä...</p>;
-  if (questions.length === 0) return <p className="text-center">Ei kysymyksiä saatavilla.</p>;
+  useEffect(() => {
+    if (timeLeft === null || finished) return;
+    if (timeLeft <= 0) {
+      setFinished(true);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft, finished]);
+
+  const handleAnswer = (option) => {
+    if (finished) return;
+    if (option === questions[currentIndex].correctAnswer) setScore((p) => p + 1);
+    if (currentIndex < questions.length - 1) setCurrentIndex((p) => p + 1);
+    else setFinished(true);
+  };
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? "0" + s : s}`;
+  };
+
+  const handleExit = () => navigate("/mode"); // ✅ yhteinen poistuminen
+
+  if (loading) return <p className="text-center mt-10">Ladataan tenttiä...</p>;
+  if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
+  if (questions.length === 0) return <p className="text-center mt-10">Ei kysymyksiä saatavilla.</p>;
 
   const currentQuestion = questions[currentIndex];
 
-  const handleAnswer = (option) => {
-    if (option === currentQuestion.correctAnswer) {
-      setScore(score + 1);
-    }
-
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      setFinished(true);
-    }
-  };
-
   return (
-    <div className="login-container">
-      <div className="panel" style={{ maxWidth: "700px" }}>
-        <h2 className="title">Tenttitila</h2>
+    <div className="panel" style={{ textAlign: "center", marginTop: "40px", maxWidth: "600px" }}>
+      <h2 className="title" style={{ color: "var(--accent-turquoise)" }}>Tenttitila</h2>
 
-        {!finished ? (
-          <>
-            <h3 style={{ color: "#f2f2f2", marginBottom: "24px" }}>
-              {currentQuestion.questionText}
-            </h3>
+      {!finished && (
+        <div style={{ marginBottom: "15px", fontWeight: "600" }}>
+          <p style={{ color: "var(--accent-turquoise)" }}>
+            Kysymys {currentIndex + 1} / {questions.length}
+          </p>
+          <p style={{ color: "var(--accent-orange)" }}>
+            Aikaa jäljellä: {formatTime(timeLeft)}
+          </p>
+        </div>
+      )}
 
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {currentQuestion.options.map((opt, i) => (
-                <li
-                  key={i}
-                  onClick={() => handleAnswer(opt)}
-                  style={{
-                    cursor: "pointer",
-                    padding: "12px 16px",
-                    marginBottom: "10px",
-                    borderRadius: "8px",
-                    backgroundColor: "#2a2a2a",
-                    color: "#f2f2f2",
-                    transition: "all 0.3s ease",
-                  }}
-                  onMouseOver={(e) => (e.target.style.backgroundColor = "#1CB1CF")}
-                  onMouseOut={(e) => (e.target.style.backgroundColor = "#2a2a2a")}
-                >
-                  {opt}
-                </li>
-              ))}
-            </ul>
+      {!finished ? (
+        <>
+          <h3 style={{ marginBottom: "20px" }}>{currentQuestion.questionText}</h3>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {currentQuestion.options.map((opt, i) => (
+              <li
+                key={i}
+                onClick={() => handleAnswer(opt)}
+                style={{
+                  cursor: "pointer",
+                  padding: "12px",
+                  marginBottom: "10px",
+                  borderRadius: "8px",
+                  backgroundColor: "#2a2a2a",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "var(--accent-orange)")
+                }
+                onMouseLeave={(e) => (e.target.style.backgroundColor = "#2a2a2a")}
+              >
+                {typeof opt === "string" ? opt : JSON.stringify(opt)}
+              </li>
+            ))}
+          </ul>
 
-            <p style={{ marginTop: "16px", fontSize: "0.95rem", color: "#ccc" }}>
-              Kysymys {currentIndex + 1} / {questions.length}
-            </p>
-          </>
-        ) : (
-          <div style={{ marginTop: "24px" }}>
-            <h3 className="title" style={{ color: "#1CB1CF" }}>
-              Testi suoritettu!
-            </h3>
-            <p style={{ fontSize: "1.2rem", color: "#F2F2F2" }}>
-              Pisteet:{" "}
-              <span style={{ color: "#FF5733", fontWeight: "bold" }}>
-                {score} / {questions.length}
-              </span>
-            </p>
-          </div>
-        )}
-      </div>
+          <button
+            onClick={handleExit}
+            className="button button--danger"
+            style={{ marginTop: "30px" }}
+          >
+            Keskeytä
+          </button>
+        </>
+      ) : (
+        <div style={{ marginTop: "20px" }}>
+          <h3 style={{ color: "var(--accent-turquoise)", fontWeight: "bold", marginBottom: "15px" }}>
+            Testi suoritettu!
+          </h3>
+          <p>
+            Pisteet:{" "}
+            <span style={{ color: "var(--accent-orange)", fontWeight: "bold" }}>
+              {score} / {questions.length}
+            </span>
+          </p>
+          {timeLeft === 0 && (
+            <p style={{ color: "#FF4444", marginTop: "10px" }}>⏰ Aika loppui!</p>
+          )}
+          <button onClick={handleExit} className="button" style={{ marginTop: "25px" }}>
+            Paluu alkuvalikkoon
+          </button>
+        </div>
+      )}
     </div>
   );
 }

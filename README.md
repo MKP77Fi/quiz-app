@@ -1,92 +1,71 @@
-🧠 TSW Group – Ajolupaharjoittelu-sovellus
+# 🧠 TSW Group – Ajolupaharjoittelu
 
-Tämä projekti on interaktiivinen verkkopohjainen tentti- ja harjoittelusovellus, joka on toteutettu osana Taitotalon ohjelmistokehityskoulutusta.
-Sovelluksen tarkoituksena on tarjota harjoittelijoille, opettajille ja ylläpidolle alusta kysymysten hallintaan, tenttien suorittamiseen ja käyttäjätunnusten hallintaan turvallisesti.
+Tämä projekti on interaktiivinen verkkopohjainen **tentti- ja harjoittelusovellus**, joka on toteutettu osana **Taitotalon ohjelmistokehityskoulutusta**.  
+Sovelluksen tavoitteena on tarjota harjoittelijoille, opettajille ja ylläpidolle alusta kysymysten hallintaan, tenttien suorittamiseen ja käyttäjähallintaan turvallisesti.
 
-📋 Kokonaisrakenne
+---
 
-Sovellus on toteutettu kaksiosaisena kokonaisuutena:
+## 🧱 Rakenne
 
-Osa	Teknologia	Kuvaus
-Backend	Node.js + Express + MongoDB (Mongoose)	Vastaa tietokantayhteyksistä, käyttäjien autentikoinnista ja API-rajapinnoista
-Frontend	React (Vite)	Käyttöliittymä, jossa käyttäjä kirjautuu, valitsee toimintatilan ja suorittaa tentin tai hallinnoi dataa
-⚙️ Projektin rakenne
+| Osa | Teknologia | Kuvaus |
+|------|-------------|---------|
+| **Backend** | Node.js + Express + MongoDB | Vastaa tietokantayhteyksistä, autentikoinnista ja API-rajapinnoista |
+| **Frontend** | React (Vite) + TailwindCSS | Käyttöliittymä, jossa käyttäjä kirjautuu, valitsee toimintatilan ja suorittaa tentin tai hallinnoi dataa |
+
 quiz-app/
+├── backend/ # Node.js + MongoDB
+│ ├── controllers/ # Sovelluslogiikka
+│ ├── models/ # Mongoose-tietomallit
+│ ├── routes/ # REST API -reitit
+│ ├── middlewares/ # verifyToken, verifyAdmin
+│ └── server.js
 │
-├── backend/                  # Node.js + Express + MongoDB
-│   ├── controllers/          # Sovelluslogiikka (auth, questions, users)
-│   ├── models/               # Tietokantamallit (Question, User)
-│   ├── routes/               # Rajapinnat (API-reitit)
-│   ├── middlewares/          # JWT-tokenin ja admin-oikeuksien tarkistus
-│   ├── scripts/              # Ylläpidon apuskriptit (esim. adminin luonti)
-│   ├── server.js             # Backendin käynnistyspiste
-│   └── .env.example          # Malli ympäristömuuttujille
+├── frontend/ # React + Vite
+│ ├── src/components/
+│ ├── src/utils/
+│ └── main.jsx
 │
-├── frontend/                 # React + Vite
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── LoginView.jsx
-│   │   │   ├── ModeSelector.jsx
-│   │   │   ├── PracticeView.jsx
-│   │   │   ├── QuizView.jsx
-│   │   │   ├── AdminView.jsx
-│   │   │   └── UserManagement.jsx
-│   │   └── main.jsx
-│   └── package.json
-│
-├── docs/                     # Dokumentaatio (määrittely, arkkitehtuuri, toteutus, error-log)
-├── README.md                 # Tämä tiedosto
-└── .gitignore
+└── docs/ # Dokumentaatio (määrittely, arkkitehtuuri, testaus)
 
-🧩 Keskeiset toiminnot
-🔐 Kirjautuminen ja roolit
+yaml
+Kopioi koodi
 
-Käyttäjät tunnistetaan JWT-tokenilla, joka tallennetaan istunnon ajaksi selaimen muistiin.
+---
 
-Käyttäjät tallennetaan MongoDB Atlas -tietokantaan.
+## 🔐 Käyttäjäroolit ja kirjautuminen
 
-Käytettävissä kaksi roolia:
+- **Admin** – hallinnoi kysymyksiä, käyttäjiä ja tenttiasetuksia  
+- **Harjoittelija** – suorittaa harjoittelu- tai tenttitilan  
+- Käyttäjät tunnistetaan **JWT-tokenilla** (sessionStorage)  
+- Salasanat tallennetaan **bcrypt-hashattuina** MongoDB:hen
 
-Admin – pääsee hallintanäkymään, jossa voi muokata kysymyksiä ja käyttäjiä (CRUD)
+---
 
-Harjoittelija – valitsee harjoittelu- tai tenttitilan
+## 🧠 Sovelluksen tilat
 
-🧠 Tentti- ja harjoittelutilat
+| Tila | Kuvaus |
+|------|--------|
+| **Harjoittelutila** | Näyttää heti onko vastaus oikein, yksi kysymys kerrallaan |
+| **Tenttitila** | Ei palauta tulosta ennen lopetusta; pisteet ja aikaraja |
+| **Admin-hallinta** | Kysymysten ja käyttäjien CRUD-toiminnot, lokien katselu |
+| **Lokit** | Kaikki merkittävät tapahtumat tallennetaan MongoDB:hen (asetettavissa `LOG_TTL_DAYS`) |
 
-Tenttitila: vastaukset eivät näy heti; lopuksi tuloskooste
+---
 
-Harjoittelutila: näyttää heti, onko vastaus oikein
+## ⚙️ Käyttöönotto
 
-Yksi kysymys kerrallaan, manuaalinen siirtyminen “Seuraava”-painikkeella
-
-Dynaaminen tietojen haku tietokannasta (GET /api/questions)
-
-💾 Kysymysten ja käyttäjien hallinta
-
-Kaikki data tallennetaan MongoDB Atlas -tietokantaan
-
-Admin voi käyttöliittymästä käsin:
-
-Lisätä, muokata ja poistaa kysymyksiä
-
-Hallinnoida käyttäjätilejä (luonti, muokkaus, poisto)
-
-CRUD-toiminnot on suojattu verifyToken ja verifyAdmin -middlewareilla
-
-🧭 Käyttöönotto
-1️⃣ Backend
+### 1️⃣ Backend
+```bash
 cd backend
 npm install
 npm start
 
+Luo tarvittaessa .env tiedosto .env.example -mallin pohjalta:
 
-📄 Luo tarvittaessa .env-tiedosto. Malli löytyy .env.example-tiedostosta.
-
-.env-tiedoston sisältöesimerkki:
-
-MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>/<dbname>?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>/<dbname>?retryWrites=true&w=majority
 PORT=3000
 JWT_SECRET=salainen_avain
+LOG_TTL_DAYS=90
 
 2️⃣ Frontend
 cd frontend
@@ -94,7 +73,7 @@ npm install
 npm run dev
 
 
-Sovellus toimii oletuksena seuraavissa osoitteissa:
+Sovellus toimii:
 
 Backend: http://localhost:3000
 
@@ -105,41 +84,41 @@ Postman
 
 Kirjautuminen: POST /api/auth/login
 
-Tarkista, että token palautuu oikein
+CRUD-reitit: /api/questions, /api/users, /api/settings, /api/logs
 
-Kysymysten CRUD: POST/PUT/DELETE /api/questions
-
-Käyttäjien CRUD: POST/PUT/DELETE /api/users
-
-Tokenin tarkistus: lisää headeriin Authorization: Bearer <token>
+Lisää header: Authorization: Bearer <token>
 
 Frontend
 
-Kirjaudu sisään (admin tai harjoittelija)
+Kirjaudu (admin tai harjoittelija)
 
-Harjoittelija voi valita harjoittelun tai tentin
+Harjoittelutila ja tenttitila testattavissa ModeSelectorin kautta
 
-Admin voi hallita kysymyksiä ja käyttäjiä
-
-Testaa uloskirjautuminen molemmissa rooleissa
+Admin-hallinta: kysymykset, käyttäjät, asetukset ja lokit
 
 🔒 Tietoturva
 
-Kaikki salasanat tallennetaan bcrypt-hashattuina
+JWT-pohjainen autentikointi
 
-Rajapinnat suojataan JWT-tunnisteilla
+Bcrypt-salasanojen suojaus
 
-Ympäristömuuttujat (.env) eivät kuulu versionhallintaan
+verifyToken ja verifyAdmin -middlewaret
 
-Admin-oikeudet tarkistetaan aina middleware-tasolla
+Ympäristömuuttujat pidetään versionhallinnan ulkopuolella
 
-🧰 Käytetyt kirjastot
-Kirjasto	Tarkoitus
-express	Backend-palvelin ja reititys
-mongoose	MongoDB-tietokantayhteys
-jsonwebtoken	JWT-tokenien luonti ja tarkistus
-bcrypt	Salasanojen hashäys
-cors	CORS-suojausten hallinta
-dotenv	Ympäristömuuttujien käsittely
-react / vite	Frontend-käyttöliittymä
-react-router-dom	Navigointi eri näkymien välillä
+🚧 Kehitystilanne
+
+Tämä on kehitysvaiheen versio.
+Seuraavaksi vuorossa:
+
+🧩 Käyttöliittymätestaus ja UX-parannukset
+
+🧠 Lokitietojen analytiikka
+
+📊 Mahdollinen raportointinäkymä
+
+📚 Lisätiedot
+
+Frontend README
+
+Backend README

@@ -46,19 +46,19 @@ function UserManagementView() {
     }
   };
 
-  const logout = () => {
-    sessionStorage.clear();
-    navigate("/");
-  };
+  const handleBack = () => navigate("/admin"); // ✅ Paluu adminiin
 
   return (
     <div className="admin-dashboard">
       <div className="admin-box" style={{ maxWidth: "600px" }}>
         <h1 className="title">Käyttäjähallinta</h1>
 
-        <div className="button-group">
-          <button onClick={logout} className="button button--danger">
-            Kirjaudu ulos
+        <div
+          className="button-group"
+          style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}
+        >
+          <button onClick={handleBack} className="button">
+            Paluu alkuvalikkoon
           </button>
         </div>
 

@@ -1,6 +1,15 @@
-// frontend/src/components/PracticeView.jsx
 import { useState, useEffect } from "react";
-import "../index.css";
+import { useNavigate } from "react-router-dom"; // ✅ uusi import
+
+// Apufunktio listan sekoittamiseen (Fisher–Yates shuffle)
+function shuffleArray(array) {
+  const newArr = [...array];
+  for (let i = newArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+  }
+  return newArr;
+}
 
 function PracticeView() {
   const [questions, setQuestions] = useState([]);
@@ -8,19 +17,24 @@ function PracticeView() {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
+  const navigate = useNavigate(); // ✅ navigointi käyttöön
 
   useEffect(() => {
     fetch("http://localhost:3000/api/questions")
       .then((res) => res.json())
       .then((data) => {
-        setQuestions(data);
+        const randomized = shuffleArray(data).map((q) => ({
+          ...q,
+          options: shuffleArray(q.options),
+        }));
+        setQuestions(randomized);
         setLoading(false);
       })
       .catch((err) => console.error("Virhe ladattaessa kysymyksiä:", err));
   }, []);
 
-  if (loading) return <p className="text-center">Ladataan kysymyksiä...</p>;
-  if (questions.length === 0) return <p className="text-center">Ei kysymyksiä saatavilla.</p>;
+  if (loading) return <p className="text-center mt-10">Ladataan kysymyksiä...</p>;
+  if (questions.length === 0) return <p className="text-center mt-10">Ei kysymyksiä saatavilla.</p>;
 
   const currentQuestion = questions[currentIndex];
 
@@ -44,60 +58,70 @@ function PracticeView() {
     }
   };
 
+  const handleExit = () => navigate("/mode"); // ✅ Keskeytä tai Paluu
+
   return (
-    <div className="login-container">
-      <div className="panel" style={{ maxWidth: "700px" }}>
-        <h2 className="title">Harjoittelutila</h2>
+    <div className="panel" style={{ textAlign: "center", marginTop: "40px", maxWidth: "600px" }}>
+      <h2 className="title" style={{ color: "var(--accent-turquoise)" }}>Harjoittelutila</h2>
 
-        <h3 style={{ color: "#f2f2f2", marginBottom: "24px" }}>
-          {currentQuestion.questionText}
-        </h3>
+      <p style={{ marginBottom: "15px", fontWeight: "600", color: "var(--accent-turquoise)" }}>
+        Kysymys {currentIndex + 1} / {questions.length}
+      </p>
 
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {currentQuestion.options.map((opt, i) => (
-            <li
-              key={i}
-              onClick={() => handleAnswer(opt)}
-              style={{
-                cursor: "pointer",
-                padding: "12px 16px",
-                marginBottom: "10px",
-                borderRadius: "8px",
-                backgroundColor: "#2a2a2a",
-                color: "#f2f2f2",
-                transition: "all 0.3s ease",
-              }}
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#FF5733")}
-              onMouseOut={(e) => (e.target.style.backgroundColor = "#2a2a2a")}
-            >
-              {opt}
-            </li>
-          ))}
-        </ul>
+      <h3 style={{ marginBottom: "20px" }}>{currentQuestion.questionText}</h3>
 
-        <p
-          className="feedback-text"
-          style={{
-            marginTop: "20px",
-            fontWeight: "600",
-            color: answeredCorrectly ? "#1CB1CF" : "#ff4444",
-          }}
-        >
-          {feedback}
-        </p>
+      <ul style={{ listStyle: "none", padding: 0 }}>
+        {currentQuestion.options.map((opt, i) => (
+          <li
+            key={i}
+            onClick={() => handleAnswer(opt)}
+            style={{
+              cursor: "pointer",
+              padding: "12px",
+              marginBottom: "10px",
+              borderRadius: "8px",
+              backgroundColor: "#2a2a2a",
+              transition: "all 0.3s ease",
+            }}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = "var(--accent-orange)")}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = "#2a2a2a")}
+          >
+            {opt}
+          </li>
+        ))}
+      </ul>
 
-        {answeredCorrectly && currentIndex < questions.length - 1 && (
-          <button onClick={nextQuestion} className="button" style={{ marginTop: "20px" }}>
-            Seuraava kysymys
-          </button>
-        )}
+      <p
+        style={{
+          marginTop: "20px",
+          fontWeight: "600",
+          color: answeredCorrectly ? "#4CAF50" : "#FF4444",
+        }}
+      >
+        {feedback}
+      </p>
 
-        {answeredCorrectly && currentIndex === questions.length - 1 && (
-          <p style={{ marginTop: "20px", color: "#1CB1CF", fontWeight: "bold" }}>
+      {answeredCorrectly && currentIndex < questions.length - 1 && (
+        <button onClick={nextQuestion} className="button" style={{ marginTop: "20px" }}>
+          Seuraava kysymys
+        </button>
+      )}
+
+      {answeredCorrectly && currentIndex === questions.length - 1 && (
+        <>
+          <p style={{ marginTop: "20px", color: "#4CAF50", fontWeight: "bold" }}>
             🎉 Olet suorittanut kaikki harjoituskysymykset!
           </p>
-        )}
-      </div>
+          <button onClick={handleExit} className="button" style={{ marginTop: "20px" }}>
+            Paluu alkuvalikkoon
+          </button>
+        </>
+      )}
+
+      {/* Keskeytä näkyy aina */}
+      <button onClick={handleExit} className="button button--danger" style={{ marginTop: "30px" }}>
+        Keskeytä
+      </button>
     </div>
   );
 }

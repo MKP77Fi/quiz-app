@@ -9,6 +9,8 @@ import QuizView from "./components/QuizView";
 import AdminView from "./components/AdminView";
 import AdminDashboard from "./components/AdminDashboard";
 import UserManagementView from "./components/UserManagementView";
+import AdminQuizSettings from "./components/AdminQuizSettings";
+import AdminLogs from "./components/AdminLogs"; // ✅ uusi import
 
 function App() {
   return (
@@ -16,15 +18,18 @@ function App() {
       <Header />
       <main className="flex-grow container mx-auto px-4 py-6">
         <Routes>
+          {/* Julkiset reitit */}
           <Route path="/" element={<LoginView />} />
           <Route path="/mode" element={<ModeSelector />} />
           <Route path="/practice" element={<PracticeView />} />
           <Route path="/quiz" element={<QuizView />} />
 
-          {/* Admin routes */}
+          {/* Admin-reitit */}
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/questions" element={<AdminView />} />
           <Route path="/admin/users" element={<UserManagementView />} />
+          <Route path="/admin/quiz-settings" element={<AdminQuizSettings />} />
+          <Route path="/admin/logs" element={<AdminLogs />} /> {/* ✅ uusi reitti */}
         </Routes>
       </main>
       <Footer />

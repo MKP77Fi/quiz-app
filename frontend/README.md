@@ -1,60 +1,88 @@
-📘 2. Frontend README.md – Päivitetty versio (viikko 7)
-# Frontend – TSW Group: Ajolupaharjoittelu
+## 💻 2. `frontend/README.md`
 
-## 🧱 Projektin rakenne
-Frontend on toteutettu Reactilla ja Vite-kehitysalustalla.  
-Tyylitys on toteutettu **yhtenäisellä index.css-tiedostolla**, joka sisältää globaalit värit, typografian ja komponenttipohjaiset luokat.
+```markdown
+# 🎨 Frontend – TSW Group Ajolupaharjoittelu
 
-## 📁 Hakemistorakenne
+React (Vite) -pohjainen käyttöliittymä, jossa käyttäjät voivat kirjautua, valita toimintatilan (harjoittelu tai tentti) ja hallita kysymyksiä tai käyttäjiä rooliensa mukaan.
 
+---
+
+## 🚀 Teknologia
+
+| Osa | Kuvaus |
+|------|---------|
+| React (Vite) | Pääkehys käyttöliittymälle |
+| TailwindCSS | Tyylittely ja layout |
+| React Router DOM | Reititys näkymien välillä |
+| Fetch API | Kommunikointi backendin kanssa |
+| Session Storage | JWT-tokenin tallennus selaimessa |
+
+---
+
+## 📂 Rakenne
 
 frontend/
-├─ src/
-│ ├─ components/ # Sovelluksen komponentit
-│ ├─ utils/ # API-kutsut ja apufunktiot
-│ ├─ index.css # Keskitetty tyyli (yhteinen koko sovellukselle)
-│ └─ main.jsx
-├─ package.json
-└─ vite.config.js
+├── src/
+│ ├── components/
+│ │ ├── LoginView.jsx
+│ │ ├── ModeSelector.jsx
+│ │ ├── PracticeView.jsx
+│ │ ├── QuizView.jsx
+│ │ ├── AdminDashboard.jsx
+│ │ ├── AdminView.jsx
+│ │ ├── UserManagementView.jsx
+│ │ ├── AdminQuizSettings.jsx
+│ │ └── AdminLogs.jsx
+│ ├── utils/api.js
+│ └── main.jsx
 
+yaml
+Kopioi koodi
 
-## 🎨 Käyttöliittymätyylit
+---
 
-Kaikki näkymät hyödyntävät globaaleja luokkia, jotka määritellään `index.css`-tiedostossa.  
-Tämä takaa yhtenäisen visuaalisen ilmeen koko sovelluksessa.
+## 🧠 Keskeiset näkymät
 
-### Käytettävät pääluokat
-| Luokka | Käyttötarkoitus |
-|--------|-----------------|
-| `.panel` | Korttimainen peruspohja (login, admin jne.) |
-| `.input` | Yhtenäinen tekstikenttätyyli |
-| `.button` | Pääpainike (turkoosi–oranssi vaihtuva hover) |
-| `.button--danger` | Punainen varoituspainike (esim. uloskirjautuminen) |
-| `.title` | Näkymien pääotsikot |
-| `.error-text` | Virheilmoitusten tyyli |
-| `.login-container` | Login-näkymän asettelu |
-| `.admin-dashboard` | Admin-etusivun asettelu |
+| Komponentti | Kuvaus |
+|--------------|---------|
+| **LoginView** | Kirjautuminen JWT-tokenilla |
+| **ModeSelector** | Valinta: harjoittelu / tentti / admin |
+| **PracticeView** | Näyttää heti vastauksen oikeellisuuden |
+| **QuizView** | Tentti aikarajalla ja tuloskooste lopuksi |
+| **AdminDashboard** | Päävalikko hallintanäkymään |
+| **AdminView** | Kysymysten CRUD |
+| **UserManagementView** | Käyttäjien CRUD |
+| **AdminQuizSettings** | Tentin kysymysmäärän ja aikarajan hallinta |
+| **AdminLogs** | Järjestelmän tapahtumien seuranta |
 
-### Väriteema
-| Väri | Käyttö | HEX |
-|------|--------|-----|
-| Tumma tausta | Yleinen tausta | `#1A1A1A` |
-| Pintaelementit | Paneelit, laatikot | `#1E1E1E` |
-| Teksti (ensisijainen) | Oletustekstit | `#F2F2F2` |
-| Korosteväri 1 | Oranssi (toiminnallisuus) | `#FF5733` |
-| Korosteväri 2 | Turkoosi (painikkeet, valinnat) | `#1CB1CF` |
+---
 
-## 🧩 Komponenttien yhtenäisyys
+## 🔄 API-yhteys
 
-Kaikki painikkeet, tekstikentät ja paneelit käyttävät nyt samoja luokkia, eikä komponenttikohtaisia inline-tyylejä käytetä.  
-Yksilöllisiä komponenttityylejä varten voidaan luoda erillinen CSS-tiedosto `componentName.css`, joka tuodaan vain siihen näkymään.
+Kaikki API-kutsut määritellään tiedostossa:
+src/utils/api.js
 
-## 🚀 Käynnistys
-```bash
-cd frontend
-npm install
-npm run dev
+bash
+Kopioi koodi
 
+Esimerkki:
+```js
+const API_URL = "http://localhost:3000/api";
+fetch(`${API_URL}/questions`, { headers: getHeaders() });
+🎨 Tyylit ja ulkoasu
+TailwindCSS-pohjainen layout
 
-Frontend avautuu oletusarvoisesti osoitteeseen:
-http://localhost:5173
+Komponenttikohtaisia inline-tyylejä käytetään korostuksiin
+
+Päävärit määritelty :root-muuttujissa (var(--accent-orange), var(--accent-turquoise))
+
+🔧 Kehitystilanne
+ Harjoittelu- ja tenttitilat toimivat
+
+ Admin CRUD -näkymät
+
+ Lokinäkymä toimii reaaliajassa
+
+ UI-viimeistely (painikkeiden marginaalit, “Paluu”-painikkeet)
+
+ Lopputestauksen aikaiset UX-muutokset

@@ -8,7 +8,9 @@ const getHeaders = () => {
   return headers;
 };
 
-// QUESTIONS (olemassa)
+// ======================================================
+// QUESTIONS
+// ======================================================
 export const fetchQuestions = async () => {
   const res = await fetch(`${API_URL}/questions`, { headers: getHeaders() });
   if (!res.ok) throw new Error("Kysymysten haku epäonnistui");
@@ -44,7 +46,9 @@ export const deleteQuestion = async (id) => {
   return await res.json();
 };
 
-// USERS (Uudet)
+// ======================================================
+// USERS
+// ======================================================
 export const fetchUsers = async () => {
   const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
   if (!res.ok) throw new Error("Käyttäjien haku epäonnistui");
@@ -83,5 +87,42 @@ export const deleteUser = async (id) => {
     headers: getHeaders(),
   });
   if (!res.ok) throw new Error("Käyttäjän poistaminen epäonnistui");
+  return await res.json();
+};
+
+// ======================================================
+// SETTINGS (tenttiasetukset)
+// ======================================================
+export const fetchSettings = async () => {
+  const res = await fetch(`${API_URL}/settings`, { headers: getHeaders() });
+  if (!res.ok) throw new Error("Asetusten haku epäonnistui");
+  return await res.json();
+};
+
+export const updateSettings = async (settings) => {
+  const res = await fetch(`${API_URL}/settings`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(settings),
+  });
+  if (!res.ok) throw new Error("Asetusten tallennus epäonnistui");
+  return await res.json();
+};
+
+// ======================================================
+// LOGS (järjestelmälogit)
+// ======================================================
+export const fetchLogs = async () => {
+  const res = await fetch(`${API_URL}/logs`, { headers: getHeaders() });
+  if (!res.ok) throw new Error("Lokitietojen haku epäonnistui");
+  return await res.json();
+};
+
+export const deleteLog = async (id) => {
+  const res = await fetch(`${API_URL}/logs/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  if (!res.ok) throw new Error("Lokitietueen poistaminen epäonnistui");
   return await res.json();
 };

@@ -49,22 +49,19 @@ function AdminView() {
     }
   };
 
-  const logout = () => {
-    sessionStorage.clear();
-    navigate("/");
-  };
+  const handleBack = () => navigate("/admin"); // ✅ Paluu admin-valikkoon
 
   return (
     <div className="admin-dashboard">
       <div className="admin-box">
-        <h1 className="title">Admin-näkymä</h1>
+        <h1 className="title">Kysymysten hallinta</h1>
 
-        <div className="button-group">
-          <button className="button" onClick={() => alert("Tenttien hallinta tulossa!")}>
-            Hallinnoi tenttejä
-          </button>
-          <button className="button button--danger" onClick={logout}>
-            Kirjaudu ulos
+        <div
+          className="button-group"
+          style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}
+        >
+          <button className="button" onClick={handleBack}>
+            Paluu alkuvalikkoon
           </button>
         </div>
 

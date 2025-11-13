@@ -1,13 +1,13 @@
 // frontend/src/components/AdminDashboard.jsx
 import { useNavigate } from "react-router-dom";
-import "../index.css";
 
 function AdminDashboard() {
   const navigate = useNavigate();
 
   const goQuestions = () => navigate("/admin/questions");
   const goUsers = () => navigate("/admin/users");
-  const goExams = () => navigate("/admin/exams"); // uusi osio tenttien hallinnalle
+  const goQuizSettings = () => navigate("/admin/quiz-settings");
+  const goLogs = () => navigate("/admin/logs"); // ✅ uusi funktio
   const logout = () => {
     sessionStorage.clear();
     navigate("/");
@@ -15,21 +15,38 @@ function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      <div className="panel" style={{ maxWidth: "480px" }}>
+      <div className="panel" style={{ textAlign: "center" }}>
         <h1 className="title">Admin-valikko</h1>
-        <p>Valitse hallinnoitava osio:</p>
+        <p style={{ textAlign: "center" }}>Valitse hallinnoitava osio:</p>
 
-        <div className="admin-buttons">
-          <button onClick={goQuestions} className="button">
+        <div
+          className="admin-buttons"
+          style={{
+            marginTop: "25px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px", // ✅ lisää ilmavuutta
+            alignItems: "center",
+          }}
+        >
+          <button className="button" onClick={goQuestions}>
             Hallinnoi kysymyksiä
           </button>
-          <button onClick={goUsers} className="button">
+          <button className="button" onClick={goUsers}>
             Hallinnoi käyttäjiä
           </button>
-          <button onClick={goExams} className="button">
-            Hallinnoi tenttejä
+          <button className="button" onClick={goQuizSettings}>
+            Hallinnoi tenttiä
           </button>
-          <button onClick={logout} className="button button--danger">
+          <button className="button" onClick={goLogs}>
+            Näytä lokit
+          </button>
+
+          <button
+            className="button button--danger"
+            onClick={logout}
+            style={{ marginTop: "20px" }}
+          >
             Kirjaudu ulos
           </button>
         </div>

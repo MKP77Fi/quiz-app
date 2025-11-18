@@ -12,7 +12,7 @@ function AdminQuizSettings() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/settings");
+        const res = await fetch("${import.meta.env.VITE_API_URL}/settings");
         if (!res.ok) throw new Error("Virhe asetuksia ladattaessa");
         const data = await res.json();
         setNumQuestions(data.questionLimit || 10);
@@ -27,7 +27,7 @@ function AdminQuizSettings() {
 
   const handleSave = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/settings", {
+      const res = await fetch("${import.meta.env.VITE_API_URL}/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

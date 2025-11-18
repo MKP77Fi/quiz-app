@@ -1,4 +1,4 @@
-import logo from "../assets/logo.png"; // varmista, että tiedosto on /src/assets/logo.png
+import logo from "../assets/Logo.png"; // varmista, että tiedosto on /src/assets/logo.png
 import "../index.css"; // varmistetaan, että manuaalinen CSS on mukana
 
 export default function Header() {

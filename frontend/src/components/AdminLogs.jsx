@@ -12,7 +12,7 @@ function AdminLogs() {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/logs");
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/logs`);
       const data = await res.json();
 
       // ✅ Varmistetaan että data on taulukko

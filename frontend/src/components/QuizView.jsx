@@ -26,8 +26,8 @@ function QuizView() {
     const fetchQuizData = async () => {
       try {
         const [settingsRes, questionsRes] = await Promise.all([
-          fetch("http://localhost:3000/api/settings"),
-          fetch("http://localhost:3000/api/questions"),
+          fetch("${import.meta.env.VITE_API_URL}/settings"),
+          fetch("${import.meta.env.VITE_API_URL}/questions"),
         ]);
 
         const settingsData = settingsRes.ok

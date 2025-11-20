@@ -12,7 +12,7 @@ function AdminQuizSettings() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch("${import.meta.env.VITE_API_URL}/settings");
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/settings`);
         if (!res.ok) throw new Error("Virhe asetuksia ladattaessa");
         const data = await res.json();
         setNumQuestions(data.questionLimit || 10);

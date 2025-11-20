@@ -75,19 +75,19 @@ if (!MONGO_URI) {
 }
 
 mongoose
-    .connect(MONGO_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    })
-    .then(() => {
-        console.log("✅ MongoDB connected");
+  .connect(MONGO_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected");
 
-        const PORT = process.env.PORT || 3000;
-        app.listen(PORT, () => {
-            console.log(`🚀 Server running on port ${PORT}`);
-        });
-    })
-    .catch((err) => {
-        console.error("❌ MongoDB connection error:", err);
-        process.exit(1);
+    const PORT = process.env.PORT; // EI fallback 3000
+    if (!PORT) throw new Error("PORT environment variable is not set!");
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
     });
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
+  });
+

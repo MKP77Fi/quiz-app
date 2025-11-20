@@ -20,7 +20,7 @@ function PracticeView() {
   const navigate = useNavigate(); // ✅ navigointi käyttöön
 
   useEffect(() => {
-    fetch("${import.meta.env.VITE_API_URL}/questions")
+    fetch(`${import.meta.env.VITE_API_URL}/questions`)
       .then((res) => res.json())
       .then((data) => {
         const randomized = shuffleArray(data).map((q) => ({

@@ -22,17 +22,19 @@ const app = express();
 
 const allowedOrigins = [
     "http://localhost:5173",                          // Kehitys
-    process.env.FRONTEND_URL,                         // Vercel
+    "https://quiz-app-six-pi-21.vercel.app",          // Vercel production
 ];
 
 app.use(
     cors({
         origin: (origin, callback) => {
-            // sallitaan Postman / ei-origin -pyynnöt
-            if (!origin) return callback(null, true); 
+            // Sallitaan Postman / ei-origin pyynnöt (kuten Renderin terveyscheckit)
+            if (!origin) return callback(null, true);
+
             if (allowedOrigins.includes(origin)) {
                 return callback(null, true);
             }
+
             console.warn("⛔ Estetty CORS-pyyntö:", origin);
             return callback(new Error("CORS estetty: " + origin), false);
         },

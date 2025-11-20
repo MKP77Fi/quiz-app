@@ -1,38 +1,56 @@
 // frontend/src/components/AdminQuizSettings.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ lisätty navigointi
+import { useNavigate } from "react-router-dom";
 
 function AdminQuizSettings() {
   const [numQuestions, setNumQuestions] = useState(10);
   const [timeLimit, setTimeLimit] = useState(300);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate(); // ✅
+  const navigate = useNavigate();
 
+  const API_URL = import.meta.env.VITE_API_URL; // Vercel/Render production URL
+
+  // Hae asetukset backendistä
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/settings`);
+        const token = sessionStorage.getItem("token");
+        const headers = {
+          "Content-Type": "application/json",
+          ...(token && { "Authorization": `Bearer ${token}` })
+        };
+
+        const res = await fetch(`${API_URL}/settings`, { headers });
         if (!res.ok) throw new Error("Virhe asetuksia ladattaessa");
+
         const data = await res.json();
-        setNumQuestions(data.questionLimit || 10);
-        setTimeLimit(data.timeLimit || 300);
+        setNumQuestions(data.questionLimit ?? 10);
+        setTimeLimit(data.timeLimit ?? 300);
       } catch (err) {
         console.error("Virhe asetusten haussa:", err);
         setError("Asetusten lataus epäonnistui.");
       }
     };
-    fetchSettings();
-  }, []);
 
+    fetchSettings();
+  }, [API_URL]);
+
+  // Tallenna asetukset backendille
   const handleSave = async () => {
     try {
-      const res = await fetch("${import.meta.env.VITE_API_URL}/settings", {
+      const token = sessionStorage.getItem("token");
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` })
+      };
+
+      const res = await fetch(`${API_URL}/settings`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
-          questionLimit: numQuestions,
-          timeLimit: timeLimit,
+          questionLimit: Number(numQuestions),
+          timeLimit: Number(timeLimit),
         }),
       });
 
@@ -52,7 +70,7 @@ function AdminQuizSettings() {
     }
   };
 
-  const handleBack = () => navigate("/admin"); // ✅ paluu adminiin
+  const handleBack = () => navigate("/admin");
 
   return (
     <div
@@ -82,9 +100,7 @@ function AdminQuizSettings() {
         style={{ textAlign: "center" }}
       />
 
-      <label
-        style={{ display: "block", marginTop: "20px", marginBottom: "8px" }}
-      >
+      <label style={{ display: "block", marginTop: "20px", marginBottom: "8px" }}>
         Aikaraja (sekunteina):
       </label>
       <input

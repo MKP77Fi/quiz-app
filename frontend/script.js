@@ -1,7 +1,20 @@
+// frontend/src/script.js
+
+// API_URL ympäristömuuttujasta tai fallbackiksi localhost
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
 // Haetaan kysymykset backendistä
-fetch("http://localhost:3000/api/questions")
-  .then(response => response.json())
+fetch(`${API_URL}/questions`)
+  .then(response => {
+    if (!response.ok) throw new Error("Kysymysten haku epäonnistui");
+    return response.json();
+  })
   .then(data => {
+    if (!data.length) {
+      console.log("Ei kysymyksiä tietokannassa.");
+      return;
+    }
+
     // Otetaan ensimmäinen kysymys listasta
     const question = data[0];
 

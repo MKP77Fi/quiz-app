@@ -1,41 +1,21 @@
+// src/components/RouteAnimation.jsx
 import { useState, useEffect } from 'react';
+import Logo from '../assets/Logo.png';
 
-/**
- * RouteAnimation - Spiraalireitti logo reveal animaatio
- * 
- * Flow:
- * 1. Näyttää spiraalireittianimaation (7s)
- * 2. Tarkistaa backendin tilan samaan aikaan
- * 3a. Jos backend vastaa → skip splash, suoraan sovellukseen
- * 3b. Jos backend ei vastaa → näytä SplashScreen
- */
 function RouteAnimation({ children, onAnimationComplete }) {
-  const [animationPhase, setAnimationPhase] = useState('intro'); // 'intro' | 'splash' | 'ready'
-  const [backendAwake, setBackendAwake] = useState(false);
-  const [fadeOut, setFadeOut] = useState(false);
+  const [animationPhase, setAnimationPhase] = useState('intro');
 
   useEffect(() => {
     const runAnimation = async () => {
-      // Odota että DOM ja tyylit ovat täysin valmiit
+      // 1. Odota DOM
       await new Promise(resolve => {
-        if (document.readyState === 'complete') {
-          resolve();
-        } else {
-          window.addEventListener('load', resolve, { once: true });
-        }
+        if (document.readyState === 'complete') resolve();
+        else window.addEventListener('load', resolve, { once: true });
       });
 
-      // Lisäviive varmuuden vuoksi
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Tarkista reduced motion -asetus
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      
-      if (prefersReducedMotion) {
-        // Skip animaatio kokonaan
-        const isAwake = await checkBackend();
-        setBackendAwake(isAwake);
-        if (isAwake) {
+      // 2. Reduced motion check
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (await checkBackend()) {
           setAnimationPhase('ready');
           onAnimationComplete();
         } else {
@@ -44,58 +24,50 @@ function RouteAnimation({ children, onAnimationComplete }) {
         return;
       }
 
-      // Generoi spiraalireitti nyt kun kaikki on varmasti valmis
+      // 3. Generoi uniikki satunnaispolku (yksinkertaistettu versio alkuperäisestä)
       generateSpiralPath();
 
-      // VAIHE 1: Animaatio (7s) ja backend-tarkistus samanaikaisesti
+      // 4. Suorita animaatiosykli
+      // 0s-7s: Ajo
+      // 6s: Logo ilmestyy
+      // 7s: Tie ja autot katoavat
+      // 9s: Logo katoaa
+      // 9.6s: Valmis
       const [_, isAwake] = await Promise.all([
-        new Promise(resolve => setTimeout(resolve, 7000)),
+        new Promise(resolve => setTimeout(resolve, 9600)), 
         checkBackend()
       ]);
 
-      setBackendAwake(isAwake);
-
-      // Aloita fade-out ennen siirtymää
-      setFadeOut(true);
-
-      // Odota fade-out (500ms)
-      await new Promise(resolve => setTimeout(resolve, 500));
-
       if (isAwake) {
-        // Backend on hereillä → skip splash
         setAnimationPhase('ready');
         onAnimationComplete();
       } else {
-        // Backend nukkuu → näytä splash
         setAnimationPhase('splash');
       }
     };
 
     runAnimation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onAnimationComplete]);
 
-  // Tarkista onko backend hereillä
   const checkBackend = async () => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
       const response = await fetch(`${apiUrl}/`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
         signal: controller.signal
       });
-
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
-      console.log('Backend sleeping, will show splash screen');
       return false;
     }
   };
 
-  // Spiraalireitin generointifunktiot
+  // Yksinkertaistettu spiraalireitin generointi alkuperäisestä versiosta
   const generateSpiralPath = () => {
     const centerX = 400;
     const centerY = 300;
@@ -159,132 +131,98 @@ function RouteAnimation({ children, onAnimationComplete }) {
     }
   };
 
-  // INTRO PHASE: Spiraalireitti animaatio
   if (animationPhase === 'intro') {
     return (
-      <div 
-        className="fixed inset-0 bg-[#1A1A1A] flex items-center justify-center z-50 transition-opacity duration-500"
-        style={{ opacity: fadeOut ? 0 : 1 }}
-      >
+      <div className="fixed inset-0 bg-[#1A1A1A] flex items-center justify-center z-50">
         <style>{`
-          /* SVG Container */
+          /* Container keskelle */
           #animation-container {
             position: relative;
             width: 100%;
-            height: 100%;
-            max-width: 1000px;
-            max-height: 800px;
+            max-width: 800px;
+            aspect-ratio: 4/3;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
 
           #animation-container svg {
             width: 100%;
             height: 100%;
-            overflow: visible;
+            overflow: hidden; 
           }
 
-          /* Reitti */
+          /* --- SCENE FADE OUT (7s) --- */
+          /* Tie ja autot katoavat ensin */
+          .scene-content {
+            animation: fadeOutScene 1.5s ease-in-out 7s forwards;
+          }
+
           #road-path {
             fill: none;
             stroke: #1CB1CF;
             stroke-width: 4;
             stroke-linecap: round;
-            filter: drop-shadow(0 0 5px #1CB1CF) drop-shadow(0 0 15px #1CB1CF);
+            filter: drop-shadow(0 0 5px #1CB1CF);
             stroke-dasharray: 6000;
             stroke-dashoffset: 6000;
             animation: drawPath 7s ease-in-out forwards;
           }
 
-          /* Auto ja haamu-autot */
           .car-group {
             offset-path: var(--motion-path);
             offset-distance: 0%;
-            offset-rotate: auto 0deg;
-            animation: driveCar 7s ease-in-out forwards,
-                       fadeOutCar 0.8s ease-in 6.5s forwards;
+            offset-anchor: center;
+            transform-origin: center;
+            transform-box: fill-box;
+            animation: driveCar 7s ease-in-out forwards;
+            will-change: offset-distance, transform;
           }
 
-          .ghost-car {
-            opacity: 0;
-            mix-blend-mode: screen;
-          }
+          /* Haamuautot */
+          .ghost-car { mix-blend-mode: screen; }
+          .ghost-1 { animation-delay: 0.04s; opacity: 0.5; }
+          .ghost-2 { animation-delay: 0.08s; opacity: 0.35; }
+          .ghost-3 { animation-delay: 0.12s; opacity: 0.2; }
+          .ghost-4 { animation-delay: 0.16s; opacity: 0.1; }
 
-          .ghost-1 { animation-delay: 0.04s; opacity: 0.5 !important; }
-          .ghost-2 { animation-delay: 0.08s; opacity: 0.35 !important; }
-          .ghost-3 { animation-delay: 0.12s; opacity: 0.2 !important; }
-          .ghost-4 { animation-delay: 0.16s; opacity: 0.1 !important; }
-
-          /* Auton grafiikka */
-          .car-body {
-            fill: #000;
-            stroke: #1CB1CF;
-            stroke-width: 2;
-          }
-
-          .taillight {
-            fill: #FF0000;
-            filter: drop-shadow(0 0 5px #FF0000);
-          }
-
-          .headlight {
-            fill: url(#lightGradient);
-            opacity: 0.6;
-          }
-
-          .taxi-sign {
-            fill: #FFD700;
-            filter: drop-shadow(0 0 6px #FFD700);
-          }
-
-          .ghost-car .car-body { 
-            stroke-width: 1; 
-            stroke-opacity: 0.2; 
-            fill: none; 
-          }
-          .ghost-car .taxi-sign { opacity: 0.4; }
-          .ghost-car .headlight { opacity: 0.2; }
-
-          /* Logo reveal */
+          /* --- LOGO CONTROLS --- */
           .logo-reveal {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             opacity: 0;
-            animation: revealLogo 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 6.8s forwards;
-            pointer-events: none;
             z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            /* 1. Logo esiin (6.0s) 
+               2. Logo pois (9.0s) -> jättää tyhjän ruudun ennen unmountia
+            */
+            animation: 
+              revealLogo 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 6.0s forwards,
+              fadeOutLogo 0.6s ease-in 9.0s forwards;
           }
 
           .logo-reveal img {
-            width: 160px;
-            height: 160px;
+            width: 270px; /* Iso logo */
+            height: 270px;
             object-fit: contain;
             filter: drop-shadow(0 0 20px rgba(28, 177, 207, 0.6));
           }
 
-          /* Keyframes */
-          @keyframes driveCar {
-            0% { offset-distance: 0%; }
-            100% { offset-distance: 100%; }
+          @keyframes driveCar { to { offset-distance: 100%; } }
+          @keyframes drawPath { to { stroke-dashoffset: 0; } }
+          
+          /* Scene fade out (tie + autot) */
+          @keyframes fadeOutScene {
+            from { opacity: 1; }
+            to { opacity: 0; }
           }
-
-          @keyframes drawPath {
-            0% { stroke-dashoffset: 6000; }
-            100% { stroke-dashoffset: 0; }
-          }
-
-          @keyframes fadeOutCar {
-            from { 
-              opacity: 1; 
-              transform: scale(1); 
-            }
-            to { 
-              opacity: 0; 
-              transform: scale(2); 
-              filter: blur(10px); 
-            }
-          }
-
+          
           @keyframes revealLogo {
             0% {
               opacity: 0;
@@ -298,18 +236,25 @@ function RouteAnimation({ children, onAnimationComplete }) {
             }
           }
 
-          /* Reduced motion support */
+          /* Logo fade out (lopullinen tyhjennys) */
+          @keyframes fadeOutLogo {
+            from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            to { opacity: 0; transform: translate(-50%, -50%) scale(1.15); filter: blur(8px); }
+          }
+
+          .car-body { fill: #000; stroke: #1CB1CF; stroke-width: 2; }
+          .taillight { fill: #FF0000; filter: drop-shadow(0 0 5px #FF0000); }
+          .headlight { fill: url(#lightGradient); opacity: 0.6; }
+          .taxi-sign { fill: #FFD700; filter: drop-shadow(0 0 6px #FFD700); }
+          .ghost-car .car-body { stroke-width: 1; stroke-opacity: 0.2; fill: none; }
+
           @media (prefers-reduced-motion: reduce) {
-            #road-path,
-            .car-group,
-            .logo-reveal {
-              animation: none !important;
-            }
+            .scene-content, .logo-reveal { animation: none !important; opacity: 1; }
           }
         `}</style>
 
-        <div id="animation-container">
-          <svg viewBox="0 0 800 600">
+        <div id="animation-container" aria-hidden>
+          <svg viewBox="0 0 800 600" role="img" aria-label="Animation">
             <defs>
               <linearGradient id="lightGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" style={{ stopColor: 'rgba(255, 255, 255, 0.9)' }} />
@@ -317,88 +262,46 @@ function RouteAnimation({ children, onAnimationComplete }) {
               </linearGradient>
             </defs>
 
-            {/* Reitti */}
-            <path id="road-path" d="" />
+            {/* Tie ja autot ryhmässä -> feidaavat pois yhdessä */}
+            <g className="scene-content">
+              <path id="road-path" d="" />
 
-            {/* Haamu-autot */}
-            <g className="car-group ghost-car ghost-4">
-              <use href="#car-shape" />
-            </g>
-            <g className="car-group ghost-car ghost-3">
-              <use href="#car-shape" />
-            </g>
-            <g className="car-group ghost-car ghost-2">
-              <use href="#car-shape" />
-            </g>
-            <g className="car-group ghost-car ghost-1">
-              <use href="#car-shape" />
-            </g>
+              {[4, 3, 2, 1].map(i => (
+                <g key={i} className={`car-group ghost-car ghost-${i}`}>
+                  <use href="#car-shape" />
+                </g>
+              ))}
 
-            {/* Pääauto */}
-            <g id="main-car" className="car-group">
-              <g id="car-shape">
-                {/* Ajovalot */}
-                <path d="M 20,-10 L 140,-40 L 140,10 Z" fill="url(#lightGradient)" opacity="0.3" />
-                <path d="M 20,10 L 140,-10 L 140,40 Z" fill="url(#lightGradient)" opacity="0.3" />
-                
-                {/* Runko */}
-                <rect x="-20" y="-15" width="45" height="30" rx="5" className="car-body" />
-                
-                {/* Tuulilasi */}
-                <rect x="5" y="-12" width="5" height="24" fill="#1CB1CF" opacity="0.3" />
-                
-                {/* Takavalot */}
-                <rect x="-22" y="-14" width="4" height="8" rx="1" className="taillight" />
-                <rect x="-22" y="6" width="4" height="8" rx="1" className="taillight" />
-                
-                {/* Kyltti */}
-                <rect x="-10" y="-6" width="12" height="12" rx="2" className="taxi-sign" />
+              <g id="main-car" className="car-group">
+                <g id="car-shape">
+                  <path d="M 20,-10 L 140,-40 L 140,10 Z" fill="url(#lightGradient)" opacity="0.3" />
+                  <path d="M 20,10 L 140,-10 L 140,40 Z" fill="url(#lightGradient)" opacity="0.3" />
+                  <rect x="-20" y="-15" width="45" height="30" rx="5" className="car-body" />
+                  <rect x="5" y="-12" width="5" height="24" fill="#1CB1CF" opacity="0.3" />
+                  <rect x="-22" y="-14" width="4" height="8" rx="1" className="taillight" />
+                  <rect x="-22" y="6" width="4" height="8" rx="1" className="taillight" />
+                  <rect x="-10" y="-6" width="12" height="12" rx="2" className="taxi-sign" />
+                </g>
               </g>
             </g>
           </svg>
 
-          {/* Logo Reveal */}
           <div className="logo-reveal">
-            <img 
-              src={`${import.meta.env.BASE_URL}src/assets/Logo.png`}
-              alt="Logo" 
-              onLoad={() => console.log('✅ Logo loaded successfully')}
-              onError={(e) => {
-                console.error('❌ Logo lataus epäonnistui:', e.target.src);
-                // Kokeile absolute path
-                if (!e.target.dataset.tried) {
-                  e.target.dataset.tried = 'true';
-                  e.target.src = '/src/assets/Logo.png';
-                  return;
-                }
-                
-                // Fallback jos mikään ei toimi
-                e.target.style.display = 'none';
-                const fallback = document.createElement('div');
-                fallback.style.cssText = 'width: 160px; height: 160px; border: 3px solid #1CB1CF; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1CB1CF; font-size: 24px; font-weight: bold; background: #1A1A1A;';
-                fallback.textContent = 'LOGO';
-                e.target.parentElement.appendChild(fallback);
-              }}
-            />
+            <img src={Logo} alt="Logo" onError={(e) => { e.target.style.display='none'; }} />
           </div>
         </div>
       </div>
     );
   }
 
-  // SPLASH PHASE: Backend nukkuu, näytetään splash - FADE IN
   if (animationPhase === 'splash') {
     return (
-      <div 
-        className="transition-opacity duration-500"
-        style={{ opacity: 1 }}
-      >
+      <div className="transition-opacity duration-500" style={{ opacity: 1 }}>
         {children}
       </div>
     );
   }
 
-  // READY PHASE: Animaatio valmis
   return null;
 }
 

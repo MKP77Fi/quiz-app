@@ -7,13 +7,13 @@ function RouteAnimation({ children, onAnimationComplete }) {
 
   useEffect(() => {
     const runAnimation = async () => {
-      // Odota DOM
+      // 1. Odota DOM
       await new Promise(resolve => {
         if (document.readyState === 'complete') resolve();
         else window.addEventListener('load', resolve, { once: true });
       });
 
-      // Reduced motion check
+      // 2. Reduced motion check
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         if (await checkBackend()) {
           setAnimationPhase('ready');
@@ -24,11 +24,15 @@ function RouteAnimation({ children, onAnimationComplete }) {
         return;
       }
 
-      // Generoi polku
+      // 3. Generoi uniikki satunnaispolku
       generateSpiralPath();
 
-      // VAIHE 1: Kokonaiskesto (ajo + logo-osuus)
-      // Nostettu 9.5 sekuntiin, jotta logolla on aikaa olla yksin ruudulla
+      // 4. Suorita animaatiosykli
+      // 0s-7s: Ajo
+      // 6s: Logo ilmestyy
+      // 7s: Tie ja autot katoavat
+      // 9s: Logo katoaa
+      // 9.6s: Valmis
       const [_, isAwake] = await Promise.all([
         new Promise(resolve => setTimeout(resolve, 9600)), 
         checkBackend()
@@ -64,11 +68,13 @@ function RouteAnimation({ children, onAnimationComplete }) {
   };
 
   const generateSpiralPath = () => {
-    // Käytetään SVG:n loogista kokoa 800x600 laskennassa
     const vbWidth = 800;
     const vbHeight = 600;
     const centerX = vbWidth / 2;
     const centerY = vbHeight / 2;
+
+    // Apufunktio satunnaisluvulle välillä min-max
+    const randomRange = (min, max) => Math.random() * (max - min) + min;
 
     const getPoint = (angleInDegrees, radius) => {
       const angleInRadians = (angleInDegrees * Math.PI) / 180;
@@ -86,27 +92,40 @@ function RouteAnimation({ children, onAnimationComplete }) {
       };
     };
 
+    // 1. Satunnainen aloituskulma (pyörittää koko spiraalia)
     const startAngle = Math.random() * 360;
-    
-    // Pienennetty hieman radiusta, jotta spiraali pysyy varmasti "visuaalisesti" keskellä
-    const outerRadius = 260; 
-    const midRadius = 130;
-    const innerRadius = 50;
+
+    // 2. Satunnaiset säteet (muuttaa spiraalin laajuutta hieman joka kerta)
+    // Base values: 260, 130, 50. Varianssi +/- 20px
+    const outerRadius = 260 + randomRange(-20, 20); 
+    const midRadius = 130 + randomRange(-15, 15);
+    const innerRadius = 50 + randomRange(-5, 5);
+
+    // 3. Satunnaiset kulmien välit (muuttaa spiraalin "tiheyttä")
+    // Base step: 100 astetta. Varianssi +/- 15 astetta
+    const angleStep1 = 100 + randomRange(-15, 15);
+    const angleStep2 = 100 + randomRange(-15, 15);
+    // Viimeinen käännös kohti keskustaa
+    const angleStep3 = 90 + randomRange(-10, 10); 
 
     const p1 = getPoint(startAngle, outerRadius);
-    const angle2 = startAngle + 100;
+    
+    const angle2 = startAngle + angleStep1;
     const p2 = getPoint(angle2, midRadius);
-    const angle3 = angle2 + 100;
+    
+    const angle3 = angle2 + angleStep2;
     const p3 = getPoint(angle3, innerRadius);
-    const angle4 = angle3 + 90;
-    const p4 = { x: centerX, y: centerY };
+    
+    const angle4 = angle3 + angleStep3;
+    const p4 = { x: centerX, y: centerY }; // Päättyy aina tasan keskelle
 
-    const t1 = getTangentVector(startAngle, 100);
-    const t2_in = getTangentVector(angle2, -80);
-    const t2_out = getTangentVector(angle2, 80);
-    const t3_in = getTangentVector(angle3, -40);
-    const t3_out = getTangentVector(angle3, 40);
-    const t4_in = getTangentVector(angle4, -30);
+    // 4. Satunnaiset tangentit (muuttaa kurvien "löysyyttä" tai "kireyttä")
+    const t1 = getTangentVector(startAngle, 100 + randomRange(-20, 20));
+    const t2_in = getTangentVector(angle2, -(80 + randomRange(-15, 15)));
+    const t2_out = getTangentVector(angle2, 80 + randomRange(-15, 15));
+    const t3_in = getTangentVector(angle3, -(40 + randomRange(-10, 10)));
+    const t3_out = getTangentVector(angle3, 40 + randomRange(-10, 10));
+    const t4_in = getTangentVector(angle4, -(30 + randomRange(-5, 5)));
 
     const path = `
       M ${p1.x.toFixed(1)},${p1.y.toFixed(1)}
@@ -121,6 +140,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
         ${p4.x.toFixed(1)},${p4.y.toFixed(1)}
     `;
 
+    // Päivitä DOM
     const roadPath = document.getElementById('road-path');
     if (roadPath) roadPath.setAttribute('d', path);
 
@@ -135,14 +155,13 @@ function RouteAnimation({ children, onAnimationComplete }) {
     return (
       <div className="fixed inset-0 bg-[#1A1A1A] flex items-center justify-center z-50">
         <style>{`
-          /* Varmistetaan, että parent flex keskittää tämän elementin */
+          /* Container keskelle */
           #animation-container {
             position: relative;
             width: 100%;
             max-width: 800px;
             aspect-ratio: 4/3;
-            /* Flex-centering varmistus */
-            margin: 0 auto; 
+            margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -151,14 +170,13 @@ function RouteAnimation({ children, onAnimationComplete }) {
           #animation-container svg {
             width: 100%;
             height: 100%;
-            /* Piilotetaan ylivuoto, jos spiraali menisi hieman yli */
             overflow: hidden; 
           }
 
-          /* --- UUSI LOGIIKKA: Scene Fade Out --- */
-          /* Tämä ryhmä sisältää tien ja autot. Se feidaantuu pois kohdassa 7s */
+          /* --- SCENE FADE OUT (7s) --- */
+          /* Tie ja autot katoavat ensin */
           .scene-content {
-            animation: fadeOutScene 1s ease-in-out 7s forwards;
+            animation: fadeOutScene 1.5s ease-in-out 7s forwards;
           }
 
           #road-path {
@@ -178,7 +196,6 @@ function RouteAnimation({ children, onAnimationComplete }) {
             offset-anchor: center;
             transform-origin: center;
             transform-box: fill-box;
-            /* Auto ajaa 7s. Huom: poistettu auton oma fadeOut, koska parent (.scene-content) hoitaa sen nyt */
             animation: driveCar 7s ease-in-out forwards;
             will-change: offset-distance, transform;
           }
@@ -190,44 +207,42 @@ function RouteAnimation({ children, onAnimationComplete }) {
           .ghost-3 { animation-delay: 0.12s; opacity: 0.2; }
           .ghost-4 { animation-delay: 0.16s; opacity: 0.1; }
 
-          /* LOGO REVEAL & FADE OUT */
+          /* --- LOGO CONTROLS --- */
           .logo-reveal {
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%); /* Tämä pitää logon keskellä */
+            transform: translate(-50%, -50%);
             opacity: 0;
             z-index: 100;
             display: flex;
             align-items: center;
             justify-content: center;
             pointer-events: none;
-            /* 1. revealLogo: Tuo logon esiin kohdassa 6.0s
-               2. fadeOutLogo: Vie logon pois kohdassa 9.0s 
+            /* 1. Logo esiin (6.0s) 
+               2. Logo pois (9.0s) -> jättää tyhjän ruudun ennen unmountia
             */
             animation: 
               revealLogo 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 6.0s forwards,
-              fadeOutLogo 0.5s ease-in 9.0s forwards;
+              fadeOutLogo 0.6s ease-in 9.0s forwards;
           }
 
           .logo-reveal img {
-            width: 270px; /* +50% isompi (oli n. 160-180px) */
+            width: 270px; /* Iso logo */
             height: 270px;
             object-fit: contain;
             filter: drop-shadow(0 0 20px rgba(28, 177, 207, 0.6));
           }
 
-          /* Keyframes */
-          @keyframes driveCar {
-            to { offset-distance: 100%; }
-          }
-          @keyframes drawPath {
-            to { stroke-dashoffset: 0; }
-          }
+          @keyframes driveCar { to { offset-distance: 100%; } }
+          @keyframes drawPath { to { stroke-dashoffset: 0; } }
+          
+          /* Scene fade out (tie + autot) */
           @keyframes fadeOutScene {
             from { opacity: 1; }
             to { opacity: 0; }
           }
+          
           @keyframes revealLogo {
             0% {
               opacity: 0;
@@ -240,12 +255,13 @@ function RouteAnimation({ children, onAnimationComplete }) {
               filter: blur(0px);
             }
           }
+
+          /* Logo fade out (lopullinen tyhjennys) */
           @keyframes fadeOutLogo {
             from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            to { opacity: 0; transform: translate(-50%, -50%) scale(1.1); filter: blur(10px); }
+            to { opacity: 0; transform: translate(-50%, -50%) scale(1.15); filter: blur(8px); }
           }
 
-          /* Osat */
           .car-body { fill: #000; stroke: #1CB1CF; stroke-width: 2; }
           .taillight { fill: #FF0000; filter: drop-shadow(0 0 5px #FF0000); }
           .headlight { fill: url(#lightGradient); opacity: 0.6; }
@@ -266,7 +282,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
               </linearGradient>
             </defs>
 
-            {/* Ryhmitellään tie ja autot, jotta ne voidaan feidata pois yhdessä */}
+            {/* Tie ja autot ryhmässä -> feidaavat pois yhdessä */}
             <g className="scene-content">
               <path id="road-path" d="" />
 
@@ -290,7 +306,6 @@ function RouteAnimation({ children, onAnimationComplete }) {
             </g>
           </svg>
 
-          {/* Logo on erillään SVG:stä, jotta se voi jäädä näkyviin kun SVG-sisältö katoaa */}
           <div className="logo-reveal">
             <img src={Logo} alt="Logo" onError={(e) => { e.target.style.display='none'; }} />
           </div>

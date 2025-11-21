@@ -57,7 +57,7 @@ function SplashScreen({ onReady }) {
           
           clearTimeout(timeoutId);
 
-          if (response.ok) {
+          if (response.ok || response.status === 404) {
             // ONNISTUI!
             setStatus('Yhteys muodostettu!');
             setProgress(100);

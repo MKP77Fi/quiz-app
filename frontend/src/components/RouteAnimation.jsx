@@ -71,7 +71,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
       });
       
       clearTimeout(timeoutId);
-      return response.ok;
+      return response.ok || response.status === 404;
     } catch (error) {
       // Jos tulee timeout tai verkkovirhe
       return false;

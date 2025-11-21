@@ -27,21 +27,20 @@ function RouteAnimation({ children, onAnimationComplete }) {
       // 3. Generoi spiraalipolku
       generateSpiralPath();
 
-      // 4. Suorita animaatiosykli
-      // 0s-7s: Ajo
-      // 6s: Logo ilmestyy
-      // 7s: Tie ja autot katoavat
-      // 9s: Logo katoaa
-      // 9.6s: Valmis
+      // 4. Suorita animaatiosykli ja herätys rinnakkain
+      // Animaatio kestää 9.6s.
+      // checkBackend yrittää nyt yhteyttä 10s ajan.
       const [_, isAwake] = await Promise.all([
         new Promise(resolve => setTimeout(resolve, 9600)), 
-        checkBackend()
+        checkBackend() 
       ]);
 
       if (isAwake) {
+        // Jos backend vastasi animaation aikana, mennään suoraan sovellukseen
         setAnimationPhase('ready');
         onAnimationComplete();
       } else {
+        // Jos timeout iski (backend yhä unessa), siirrytään Splash-ruutuun jatkamaan odottelua
         setAnimationPhase('splash');
       }
     };
@@ -51,44 +50,45 @@ function RouteAnimation({ children, onAnimationComplete }) {
   }, [onAnimationComplete]);
 
   const checkBackend = async () => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    // Muutos: Localhost fallback poistettu. Jos env-muuttuja puuttuu, palautetaan false.
+    const apiUrl = import.meta.env.VITE_API_URL;
+    
+    if (!apiUrl) {
+      console.warn('VITE_API_URL puuttuu ympäristömuuttujista.');
+      return false;
+    }
+
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      // Muutos: Timeout nostettu 10 sekuntiin (10000ms).
+      // Tämä antaa backendille aikaa herätä koko animaation pyörimisen ajan.
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
       const response = await fetch(`${apiUrl}/`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
         signal: controller.signal
       });
+      
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
+      // Jos tulee timeout tai verkkovirhe
       return false;
     }
   };
 
-  // --- SPIRAALIGENERAATTORI ---
+  // --- SPIRAALIGENERAATTORI (Ei muutoksia) ---
   const generateSpiralPath = () => {
     const centerX = 400;
     const centerY = 300;
-    const startRadius = 800; // Aloitetaan ruudun ulkopuolelta
+    const startRadius = 800; 
 
-    // 1. Arvotaan suunta (1 = myötäpäivään, -1 = vastapäivään)
     const direction = Math.random() > 0.5 ? 1 : -1;
-
-    // 2. Arvotaan aloituskulma (0-360 astetta)
     const startAngle = Math.random() * 360;
-
-    // 3. Määritetään spiraalin "tiukkuus" eli kokonaiskiertymä.
-    // Jotta se näyttää spiraalilta, vaaditaan vähintään puoli kierrosta (180),
-    // enintään n. 1.5 kierrosta (540). Tämä estää "suorat" reitit.
     const totalRotation = 180 + Math.random() * 360; 
+    const steps = 3 + Math.floor(Math.random() * 3);
 
-    // 4. Jaetaan reitti paloihin (mutkiin).
-    // Enemmän paloja = monimutkaisempi spiraali.
-    const steps = 3 + Math.floor(Math.random() * 3); // 3-5 palaa
-
-    // Apufunktio koordinaateille
     const getPos = (deg, r) => {
       const rad = (deg * Math.PI) / 180;
       return {
@@ -97,53 +97,35 @@ function RouteAnimation({ children, onAnimationComplete }) {
       };
     };
 
-    // Rakennetaan SVG polku
     let currentAngle = startAngle;
     let currentRadius = startRadius;
     
     const startPt = getPos(currentAngle, currentRadius);
     let pathString = `M ${startPt.x.toFixed(1)},${startPt.y.toFixed(1)}`;
 
-    // Lasketaan askeleet
     const anglePerStep = totalRotation / steps;
     
     for (let i = 1; i <= steps; i++) {
       const isLast = i === steps;
-
-      // Lasketaan seuraava päätepiste tälle segmentille
-      // Kulma etenee suunnan mukaan
       const nextAngle = startAngle + (anglePerStep * i * direction);
-      
-      // Säde pienenee kohti nollaa. Käytetään hieman epälineaarista
-      // pienenemistä, jotta loppu ei näytä liian jyrkältä törmäykseltä.
-      // Viimeinen piste on aina tasan 0 (keskipiste).
       const radiusProgress = i / steps;
       const nextRadius = isLast ? 0 : startRadius * (1 - Math.pow(radiusProgress, 0.8));
 
       const pStart = getPos(currentAngle, currentRadius);
       const pEnd = isLast ? { x: centerX, y: centerY } : getPos(nextAngle, nextRadius);
 
-      // --- MUTKIEN GENEROINTI (Bezier Control Points) ---
-      // Lasketaan kontrollipisteet niin, että ne mukailevat ympyrän tangenttia,
-      // mutta lisäämme satunnaisuutta pituuteen, mikä luo "mutkia" spiraaliin.
-      
-      // Tangentti on 90 astetta säteestä
       const tangentAngle1 = currentAngle + (90 * direction);
-      const tangentAngle2 = nextAngle - (90 * direction); // Huom: miinus, koska tullaan toisesta päästä
+      const tangentAngle2 = nextAngle - (90 * direction);
 
-      // Kontrollipisteiden etäisyys ("kahvan pituus").
-      // Peruskaava ympyrälle on n. 0.55 * säde, mutta vaihtelemme tätä
-      // satunnaisesti (0.8 - 1.5 kerroin), jotta mutkat ovat eri jyrkkyyksiä.
       const segmentAngleSpanRad = (anglePerStep * Math.PI) / 180;
       const baseControlLen1 = (currentRadius * segmentAngleSpanRad) * 0.4;
       const baseControlLen2 = (nextRadius * segmentAngleSpanRad) * 0.4;
       
-      const randomWobble1 = 0.8 + Math.random() * 0.6; // Vaihtelu
+      const randomWobble1 = 0.8 + Math.random() * 0.6; 
       const randomWobble2 = 0.8 + Math.random() * 0.6;
 
-      const cp1 = getPos(tangentAngle1, baseControlLen1 * randomWobble1); 
-      // getPos laskee keskipisteestä, mutta tangentti on suhteellinen pisteeseen.
-      // Korjataan vektorilaskenta:
+      // const cp1 = getPos(tangentAngle1, baseControlLen1 * randomWobble1); 
+      
       const cp1Abs = {
         x: pStart.x + Math.cos(tangentAngle1 * Math.PI/180) * (baseControlLen1 * randomWobble1),
         y: pStart.y + Math.sin(tangentAngle1 * Math.PI/180) * (baseControlLen1 * randomWobble1)
@@ -160,12 +142,10 @@ function RouteAnimation({ children, onAnimationComplete }) {
           ${pEnd.x.toFixed(1)},${pEnd.y.toFixed(1)}
       `;
 
-      // Päivitä loopin tila
       currentAngle = nextAngle;
       currentRadius = nextRadius;
     }
 
-    // Päivitä DOM
     const roadPath = document.getElementById('road-path');
     if (roadPath) {
       roadPath.setAttribute('d', pathString);
@@ -182,7 +162,6 @@ function RouteAnimation({ children, onAnimationComplete }) {
     return (
       <div className="fixed inset-0 bg-[#1A1A1A] flex items-center justify-center z-50">
         <style>{`
-          /* Container keskelle */
           #animation-container {
             position: relative;
             width: 100%;
@@ -200,7 +179,6 @@ function RouteAnimation({ children, onAnimationComplete }) {
             overflow: hidden; 
           }
 
-          /* --- SCENE FADE OUT (7s) --- */
           .scene-content {
             animation: fadeOutScene 1.5s ease-in-out 7s forwards;
           }
@@ -226,14 +204,12 @@ function RouteAnimation({ children, onAnimationComplete }) {
             will-change: offset-distance, transform;
           }
 
-          /* Haamuautot */
           .ghost-car { mix-blend-mode: screen; }
           .ghost-1 { animation-delay: 0.04s; opacity: 0.5; }
           .ghost-2 { animation-delay: 0.08s; opacity: 0.35; }
           .ghost-3 { animation-delay: 0.12s; opacity: 0.2; }
           .ghost-4 { animation-delay: 0.16s; opacity: 0.1; }
 
-          /* --- LOGO CONTROLS --- */
           .logo-reveal {
             position: absolute;
             top: 50%;

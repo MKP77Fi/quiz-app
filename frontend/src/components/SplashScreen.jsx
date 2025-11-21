@@ -6,54 +6,82 @@ function SplashScreen({ onReady }) {
   const [dots, setDots] = useState('.')
 
   useEffect(() => {
-    // Animoi pisteet (...)
+    let isMounted = true;
+    
+    // 1. Animoi pisteet (...)
     const dotsInterval = setInterval(() => {
       setDots(prev => prev.length >= 3 ? '.' : prev + '.')
     }, 500)
 
-    // Animoi edistymispalkki
+    // 2. Animoi edistymispalkki (Fiksumpi logiikka)
+    // Menee hitaasti 90% asti, mutta odottaa siinä kunnes backend vastaa
     const progressInterval = setInterval(() => {
       setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval)
-          return 100
-        }
-        return prev + 2
+        if (prev >= 90) return 90 // Jäädään odottamaan 90% kohdalle
+        // Hidastetaan vauhtia loppua kohden
+        const increment = prev < 50 ? 2 : 0.5 
+        return prev + increment
       })
-    }, 300)
+    }, 100)
 
-    // Wake up backend (ilman localhost-viittettä)
+    // 3. Wake up backend (Polling / Retry logic)
     const wakeUpBackend = async () => {
       const apiUrl = import.meta.env.VITE_API_URL
       
-      try {
-        if (apiUrl) {
-          setStatus('Yhdistetään palvelimeen')
-          
+      // Jos URL puuttuu, ei voida tehdä mitään -> sisään vaan
+      if (!apiUrl) {
+        setStatus('Ladataan sovellusta (Offline mode)')
+        setProgress(100)
+        setTimeout(() => isMounted && onReady(), 1000)
+        return
+      }
+
+      const MAX_ATTEMPTS = 20; // Yritetään n. 40-50 sekuntia
+      const RETRY_DELAY = 2000; // 2 sekunnin välein
+
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+        if (!isMounted) return;
+
+        try {
+          // Päivitetään statusta vain jos kestää pitkään (yli 2 yritystä)
+          if (i > 1) setStatus(`Herätellään palvelinta (yritys ${i + 1}/${MAX_ATTEMPTS})`)
+
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout per pyyntö
+
           const response = await fetch(`${apiUrl}/`, {
             method: 'GET',
-            headers: { 'Accept': 'application/json' }
-          })
+            headers: { 'Accept': 'application/json' },
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
 
           if (response.ok) {
-            setStatus('Valmis!')
-            setProgress(100)
+            // ONNISTUI!
+            setStatus('Yhteys muodostettu!');
+            setProgress(100);
+            clearInterval(progressInterval); // Lopeta feikki-lataus
             
+            // Pieni viive jotta käyttäjä näkee 100% ja viestin
             setTimeout(() => {
-              onReady()
-            }, 800)
-          } else {
-            setStatus('Palvelin vastasi, ladataan sovellusta')
-            setTimeout(() => onReady(), 1500)
+              if (isMounted) onReady();
+            }, 800);
+            return; // Lopeta loop
           }
-        } else {
-          // Ei API-URL:ia, siirry suoraan lataamaan
-          setStatus('Ladataan sovellusta')
-          setTimeout(() => onReady(), 1000)
+        } catch (error) {
+          // Verkkovirhe tai timeout - jatketaan looppia
+          console.log(`Backend wake-up attempt ${i + 1} failed, retrying...`);
         }
-      } catch (error) {
-        console.error('Wake-up error:', error)
-        setStatus('Ladataan sovellusta')
+
+        // Odota ennen seuraavaa yritystä
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      }
+
+      // Jos loop loppui ilman onnistumista (Timeout)
+      if (isMounted) {
+        setStatus('Palvelin ei vastaa, yritetään avata sovellus...')
+        setProgress(100)
         setTimeout(() => onReady(), 1500)
       }
     }
@@ -61,6 +89,7 @@ function SplashScreen({ onReady }) {
     wakeUpBackend()
 
     return () => {
+      isMounted = false;
       clearInterval(dotsInterval)
       clearInterval(progressInterval)
     }
@@ -82,7 +111,7 @@ function SplashScreen({ onReady }) {
         boxSizing: 'border-box !important'
       }}
     >
-      {/* Header - otettu toisesta koodista */}
+      {/* Header */}
       <div 
         className="splash-header"
         style={{
@@ -126,7 +155,7 @@ function SplashScreen({ onReady }) {
         </p>
       </div>
 
-      {/* Spinner ja sisältö - alkuperäisestä koodista, mutta tyylitetty uudelleen */}
+      {/* Spinner ja sisältö */}
       <div 
         className="splash-content"
         style={{
@@ -235,7 +264,7 @@ function SplashScreen({ onReady }) {
             lineHeight: '1.5 !important'
           }}
         >
-          💡 Vinkki: Käytä harjoittelutilaa oppiaksesi ja tenttitilaa testaamaan osaamistasi!
+          💡 Vinkki: Jos lataus kestää, palvelin saattaa olla heräämässä unilta. Tämä voi viedä noin minuutin.
         </p>
       </div>
 
@@ -269,7 +298,6 @@ function SplashScreen({ onReady }) {
           }
         }
         
-        /* Varmista että tämä CSS jyrää kaikki muut */
         .splash-screen-wrapper {
           all: unset !important;
           display: flex !important;

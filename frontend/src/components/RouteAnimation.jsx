@@ -24,7 +24,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
         return;
       }
 
-      // 3. Generoi uniikki satunnaispolku
+      // 3. Generoi spiraalipolku
       generateSpiralPath();
 
       // 4. Suorita animaatiosykli
@@ -67,99 +67,111 @@ function RouteAnimation({ children, onAnimationComplete }) {
     }
   };
 
-  // --- UUSI DYNAAMINEN REITTIGENERAATTORI ---
+  // --- SPIRAALIGENERAATTORI ---
   const generateSpiralPath = () => {
     const centerX = 400;
     const centerY = 300;
-    
-    // Apufunktio pisteen laskemiseen kulman ja säteen perusteella
-    const getPoint = (angleDeg, radius) => {
-      const rad = (angleDeg * Math.PI) / 180;
-      return {
-        x: centerX + Math.cos(rad) * radius,
-        y: centerY + Math.sin(rad) * radius
-      };
-    };
+    const startRadius = 800; // Aloitetaan ruudun ulkopuolelta
 
-    // Apufunktio tangenttivektorille (kurvin "kahva")
-    const getTangent = (angleDeg, length) => {
-      // Tangentti on 90 astetta kulmasta (jotta auto kulkee "tietä pitkin" eikä poikittain)
-      const rad = ((angleDeg + 90) * Math.PI) / 180;
-      return {
-        x: Math.cos(rad) * length,
-        y: Math.sin(rad) * length
-      };
-    };
-
-    // 1. Arvotaan mutkien määrä (1, 2 tai 3 segmenttiä)
-    const numSegments = Math.floor(Math.random() * 3) + 1;
-    
-    // 2. Arvotaan lähtökulma (mistä suunnasta auto tulee)
-    const startAngle = Math.random() * 360;
-
-    // 3. Arvotaan kiertosuunta (1 = myötäpäivään, -1 = vastapäivään)
+    // 1. Arvotaan suunta (1 = myötäpäivään, -1 = vastapäivään)
     const direction = Math.random() > 0.5 ? 1 : -1;
 
-    // Määritellään polun pisteet
-    // Lähtösäde on 800 (reilusti ruudun ulkopuolella), loppusäde on 0 (keskipiste)
-    let currentRadius = 800;
+    // 2. Arvotaan aloituskulma (0-360 astetta)
+    const startAngle = Math.random() * 360;
+
+    // 3. Määritetään spiraalin "tiukkuus" eli kokonaiskiertymä.
+    // Jotta se näyttää spiraalilta, vaaditaan vähintään puoli kierrosta (180),
+    // enintään n. 1.5 kierrosta (540). Tämä estää "suorat" reitit.
+    const totalRotation = 180 + Math.random() * 360; 
+
+    // 4. Jaetaan reitti paloihin (mutkiin).
+    // Enemmän paloja = monimutkaisempi spiraali.
+    const steps = 3 + Math.floor(Math.random() * 3); // 3-5 palaa
+
+    // Apufunktio koordinaateille
+    const getPos = (deg, r) => {
+      const rad = (deg * Math.PI) / 180;
+      return {
+        x: centerX + Math.cos(rad) * r,
+        y: centerY + Math.sin(rad) * r
+      };
+    };
+
+    // Rakennetaan SVG polku
     let currentAngle = startAngle;
-    let pathString = '';
+    let currentRadius = startRadius;
+    
+    const startPt = getPos(currentAngle, currentRadius);
+    let pathString = `M ${startPt.x.toFixed(1)},${startPt.y.toFixed(1)}`;
 
-    // Lasketaan aloituspiste
-    const startPt = getPoint(currentAngle, currentRadius);
-    pathString += `M ${startPt.x.toFixed(1)},${startPt.y.toFixed(1)}`;
+    // Lasketaan askeleet
+    const anglePerStep = totalRotation / steps;
+    
+    for (let i = 1; i <= steps; i++) {
+      const isLast = i === steps;
 
-    // Luodaan silmukassa Bezier-käyriä (C) kohti keskustaa
-    for (let i = 0; i < numSegments; i++) {
-      // Kuinka suuri osuus matkasta tämä segmentti on?
-      // Viimeinen segmentti menee aina nollaan.
-      const isLast = i === numSegments - 1;
+      // Lasketaan seuraava päätepiste tälle segmentille
+      // Kulma etenee suunnan mukaan
+      const nextAngle = startAngle + (anglePerStep * i * direction);
       
-      // Seuraava säde: pienenee kohti nollaa
-      // Esim. jos 3 segmenttiä: 800 -> 500 -> 200 -> 0
-      const nextRadius = isLast ? 0 : currentRadius * (0.4 + Math.random() * 0.3);
+      // Säde pienenee kohti nollaa. Käytetään hieman epälineaarista
+      // pienenemistä, jotta loppu ei näytä liian jyrkältä törmäykseltä.
+      // Viimeinen piste on aina tasan 0 (keskipiste).
+      const radiusProgress = i / steps;
+      const nextRadius = isLast ? 0 : startRadius * (1 - Math.pow(radiusProgress, 0.8));
+
+      const pStart = getPos(currentAngle, currentRadius);
+      const pEnd = isLast ? { x: centerX, y: centerY } : getPos(nextAngle, nextRadius);
+
+      // --- MUTKIEN GENEROINTI (Bezier Control Points) ---
+      // Lasketaan kontrollipisteet niin, että ne mukailevat ympyrän tangenttia,
+      // mutta lisäämme satunnaisuutta pituuteen, mikä luo "mutkia" spiraaliin.
       
-      // Seuraava kulma: käännetään tietty astemäärä (jyrkkyys vaihtelee)
-      // Arvotaan käännöksen suuruus per segmentti (esim. 60 - 120 astetta)
-      const angleStep = (60 + Math.random() * 60) * direction;
-      const nextAngle = currentAngle + angleStep;
+      // Tangentti on 90 astetta säteestä
+      const tangentAngle1 = currentAngle + (90 * direction);
+      const tangentAngle2 = nextAngle - (90 * direction); // Huom: miinus, koska tullaan toisesta päästä
 
-      const pStart = getPoint(currentAngle, currentRadius);
-      const pEnd = isLast ? { x: centerX, y: centerY } : getPoint(nextAngle, nextRadius);
+      // Kontrollipisteiden etäisyys ("kahvan pituus").
+      // Peruskaava ympyrälle on n. 0.55 * säde, mutta vaihtelemme tätä
+      // satunnaisesti (0.8 - 1.5 kerroin), jotta mutkat ovat eri jyrkkyyksiä.
+      const segmentAngleSpanRad = (anglePerStep * Math.PI) / 180;
+      const baseControlLen1 = (currentRadius * segmentAngleSpanRad) * 0.4;
+      const baseControlLen2 = (nextRadius * segmentAngleSpanRad) * 0.4;
+      
+      const randomWobble1 = 0.8 + Math.random() * 0.6; // Vaihtelu
+      const randomWobble2 = 0.8 + Math.random() * 0.6;
 
-      // Tangenttien pituudet (vaikuttavat mutkan loivuuteen)
-      // Pituus skaalataan säteen mukaan, jotta mutkat tiukkenevat keskustaa kohti
-      const tLengthStart = currentRadius * 0.5; 
-      const tLengthEnd = isLast ? 0 : nextRadius * 0.5; // Keskipisteessä ei enää vauhtia ulospäin
+      const cp1 = getPos(tangentAngle1, baseControlLen1 * randomWobble1); 
+      // getPos laskee keskipisteestä, mutta tangentti on suhteellinen pisteeseen.
+      // Korjataan vektorilaskenta:
+      const cp1Abs = {
+        x: pStart.x + Math.cos(tangentAngle1 * Math.PI/180) * (baseControlLen1 * randomWobble1),
+        y: pStart.y + Math.sin(tangentAngle1 * Math.PI/180) * (baseControlLen1 * randomWobble1)
+      };
 
-      const tStart = getTangent(currentAngle, tLengthStart * direction); 
-      const tEnd = getTangent(nextAngle, -tLengthEnd * direction); // Miinus, koska tullaan "sisään"
-
-      // Rakennetaan Bezier-komento: C cp1x,cp1y cp2x,cp2y x,y
-      const cp1 = { x: pStart.x + tStart.x, y: pStart.y + tStart.y };
-      const cp2 = { x: pEnd.x + tEnd.x, y: pEnd.y + tEnd.y };
+      const cp2Abs = {
+        x: pEnd.x + Math.cos(tangentAngle2 * Math.PI/180) * (baseControlLen2 * randomWobble2),
+        y: pEnd.y + Math.sin(tangentAngle2 * Math.PI/180) * (baseControlLen2 * randomWobble2)
+      };
 
       pathString += `
-        C ${cp1.x.toFixed(1)},${cp1.y.toFixed(1)}
-          ${cp2.x.toFixed(1)},${cp2.y.toFixed(1)}
+        C ${cp1Abs.x.toFixed(1)},${cp1Abs.y.toFixed(1)}
+          ${cp2Abs.x.toFixed(1)},${cp2Abs.y.toFixed(1)}
           ${pEnd.x.toFixed(1)},${pEnd.y.toFixed(1)}
       `;
 
-      // Päivitetään muuttujat seuraavaa kierrosta varten
-      currentRadius = nextRadius;
+      // Päivitä loopin tila
       currentAngle = nextAngle;
+      currentRadius = nextRadius;
     }
 
-    // Päivitä SVG-polku
+    // Päivitä DOM
     const roadPath = document.getElementById('road-path');
     if (roadPath) {
       roadPath.setAttribute('d', pathString);
       
-      // Päivitä CSS custom property autoille
       const container = document.getElementById('animation-container');
       if (container) {
-        // Siistitään stringi CSS:ää varten
         const cleanPath = pathString.replace(/\s+/g, ' ').trim();
         container.style.setProperty('--motion-path', `path('${cleanPath}')`);
       }
@@ -189,7 +201,6 @@ function RouteAnimation({ children, onAnimationComplete }) {
           }
 
           /* --- SCENE FADE OUT (7s) --- */
-          /* Tie ja autot katoavat ensin */
           .scene-content {
             animation: fadeOutScene 1.5s ease-in-out 7s forwards;
           }
@@ -234,16 +245,13 @@ function RouteAnimation({ children, onAnimationComplete }) {
             align-items: center;
             justify-content: center;
             pointer-events: none;
-            /* 1. Logo esiin (6.0s) 
-               2. Logo pois (9.0s) -> jättää tyhjän ruudun ennen unmountia
-            */
             animation: 
               revealLogo 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 6.0s forwards,
               fadeOutLogo 0.6s ease-in 9.0s forwards;
           }
 
           .logo-reveal img {
-            width: 270px; /* Iso logo */
+            width: 270px;
             height: 270px;
             object-fit: contain;
             filter: drop-shadow(0 0 20px rgba(28, 177, 207, 0.6));
@@ -252,7 +260,6 @@ function RouteAnimation({ children, onAnimationComplete }) {
           @keyframes driveCar { to { offset-distance: 100%; } }
           @keyframes drawPath { to { stroke-dashoffset: 0; } }
           
-          /* Scene fade out (tie + autot) */
           @keyframes fadeOutScene {
             from { opacity: 1; }
             to { opacity: 0; }
@@ -271,7 +278,6 @@ function RouteAnimation({ children, onAnimationComplete }) {
             }
           }
 
-          /* Logo fade out (lopullinen tyhjennys) */
           @keyframes fadeOutLogo {
             from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
             to { opacity: 0; transform: translate(-50%, -50%) scale(1.15); filter: blur(8px); }
@@ -297,7 +303,6 @@ function RouteAnimation({ children, onAnimationComplete }) {
               </linearGradient>
             </defs>
 
-            {/* Tie ja autot ryhmässä -> feidaavat pois yhdessä */}
             <g className="scene-content">
               <path id="road-path" d="" />
 

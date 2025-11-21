@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import logoImage from '../assets/Logo.png';
 
 /**
  * RouteAnimation - Spiraalireitti logo reveal animaatio
@@ -156,29 +155,19 @@ function RouteAnimation({ children, onAnimationComplete }) {
         style={{ opacity: fadeOut ? 0 : 1 }}
       >
         <style>{`
-          /* SVG Container - keskitetty */
-          .animation-svg-container {
+          /* SVG Container */
+          #animation-container {
+            position: relative;
             width: 100%;
             height: 100%;
             max-width: 1000px;
             max-height: 800px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
           }
 
-          @media (max-width: 768px) {
-            .animation-svg-container {
-              max-width: 90vw;
-              max-height: 70vh;
-            }
-          }
-
-          .animation-svg-container svg {
+          #animation-container svg {
             width: 100%;
             height: 100%;
-            display: block;
+            overflow: visible;
           }
 
           /* Reitti */
@@ -242,7 +231,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
           .ghost-car .taxi-sign { opacity: 0.4; }
           .ghost-car .headlight { opacity: 0.2; }
 
-          /* Logo reveal - KORJATTU KESKITYS */
+          /* Logo reveal */
           .logo-reveal {
             position: absolute;
             top: 50%;
@@ -251,7 +240,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
             opacity: 0;
             animation: revealLogo 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 6.8s forwards;
             pointer-events: none;
-            z-index: 10;
+            z-index: 100;
           }
 
           .logo-reveal img {
@@ -259,7 +248,6 @@ function RouteAnimation({ children, onAnimationComplete }) {
             height: 160px;
             object-fit: contain;
             filter: drop-shadow(0 0 20px rgba(28, 177, 207, 0.6));
-            display: block;
           }
 
           /* Keyframes */
@@ -308,8 +296,8 @@ function RouteAnimation({ children, onAnimationComplete }) {
           }
         `}</style>
 
-        <div id="animation-container" className="animation-svg-container">
-          <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
+        <div id="animation-container">
+          <svg viewBox="0 0 800 600">
             <defs>
               <linearGradient id="lightGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" style={{ stopColor: 'rgba(255, 255, 255, 0.9)' }} />
@@ -357,19 +345,35 @@ function RouteAnimation({ children, onAnimationComplete }) {
             </g>
           </svg>
 
-          {/* Logo Reveal - KORJATTU */}
+          {/* Logo Reveal */}
           <div className="logo-reveal">
             <img 
-              src={logoImage}
+              src="/src/assets/Logo.png"
               alt="Logo" 
+              onLoad={() => console.log('Logo loaded successfully')}
               onError={(e) => {
-                console.error('Logo lataus epäonnistui:', e);
-                // Fallback jos logo ei lataudu
-                e.target.style.display = 'none';
-                const fallback = document.createElement('div');
-                fallback.style.cssText = 'width: 160px; height: 160px; border: 3px solid #1CB1CF; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1CB1CF; font-size: 24px; font-weight: bold;';
-                fallback.textContent = 'LOGO';
-                e.target.parentElement.appendChild(fallback);
+                console.error('Logo lataus epäonnistui, kokeillaan vaihtoehtoista polkua');
+                // Kokeile eri polkuja
+                const paths = [
+                  './assets/Logo.png',
+                  '../assets/Logo.png',
+                  '/assets/Logo.png',
+                  'src/assets/Logo.png'
+                ];
+                
+                const currentSrc = e.target.src;
+                const nextPath = paths.find(p => !currentSrc.includes(p));
+                
+                if (nextPath) {
+                  e.target.src = nextPath;
+                } else {
+                  // Fallback
+                  e.target.style.display = 'none';
+                  const fallback = document.createElement('div');
+                  fallback.style.cssText = 'width: 160px; height: 160px; border: 3px solid #1CB1CF; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1CB1CF; font-size: 24px; font-weight: bold; background: #1A1A1A;';
+                  fallback.textContent = 'LOGO';
+                  e.target.parentElement.appendChild(fallback);
+                }
               }}
             />
           </div>

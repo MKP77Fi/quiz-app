@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import logoImage from '../assets/Logo.png';
 
 /**
  * RouteAnimation - Spiraalireitti logo reveal animaatio
@@ -12,6 +13,7 @@ import { useState, useEffect } from 'react';
 function RouteAnimation({ children, onAnimationComplete }) {
   const [animationPhase, setAnimationPhase] = useState('intro'); // 'intro' | 'splash' | 'ready'
   const [backendAwake, setBackendAwake] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
     const runAnimation = async () => {
@@ -31,8 +33,8 @@ function RouteAnimation({ children, onAnimationComplete }) {
         return;
       }
 
-      // Generoi spiraalireitti
-      generateSpiralPath();
+      // Generoi spiraalireitti pienen viiveen jälkeen (jotta DOM on valmis)
+      setTimeout(() => generateSpiralPath(), 100);
 
       // VAIHE 1: Animaatio (7s) ja backend-tarkistus samanaikaisesti
       const [_, isAwake] = await Promise.all([
@@ -41,6 +43,12 @@ function RouteAnimation({ children, onAnimationComplete }) {
       ]);
 
       setBackendAwake(isAwake);
+
+      // Aloita fade-out ennen siirtymää
+      setFadeOut(true);
+
+      // Odota fade-out (500ms)
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       if (isAwake) {
         // Backend on hereillä → skip splash
@@ -143,14 +151,21 @@ function RouteAnimation({ children, onAnimationComplete }) {
   // INTRO PHASE: Spiraalireitti animaatio
   if (animationPhase === 'intro') {
     return (
-      <div className="fixed inset-0 bg-[#1A1A1A] flex items-center justify-center z-50">
+      <div 
+        className="fixed inset-0 bg-[#1A1A1A] flex items-center justify-center z-50 transition-opacity duration-500"
+        style={{ opacity: fadeOut ? 0 : 1 }}
+      >
         <style>{`
-          /* SVG Container */
+          /* SVG Container - keskitetty */
           .animation-svg-container {
             width: 100%;
             height: 100%;
             max-width: 1000px;
             max-height: 800px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
           }
 
           @media (max-width: 768px) {
@@ -163,7 +178,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
           .animation-svg-container svg {
             width: 100%;
             height: 100%;
-            overflow: visible;
+            display: block;
           }
 
           /* Reitti */
@@ -227,7 +242,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
           .ghost-car .taxi-sign { opacity: 0.4; }
           .ghost-car .headlight { opacity: 0.2; }
 
-          /* Logo reveal */
+          /* Logo reveal - KORJATTU KESKITYS */
           .logo-reveal {
             position: absolute;
             top: 50%;
@@ -236,6 +251,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
             opacity: 0;
             animation: revealLogo 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 6.8s forwards;
             pointer-events: none;
+            z-index: 10;
           }
 
           .logo-reveal img {
@@ -243,6 +259,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
             height: 160px;
             object-fit: contain;
             filter: drop-shadow(0 0 20px rgba(28, 177, 207, 0.6));
+            display: block;
           }
 
           /* Keyframes */
@@ -291,8 +308,8 @@ function RouteAnimation({ children, onAnimationComplete }) {
           }
         `}</style>
 
-        <div id="animation-container" className="animation-svg-container relative">
-          <svg viewBox="0 0 800 600">
+        <div id="animation-container" className="animation-svg-container">
+          <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
             <defs>
               <linearGradient id="lightGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" style={{ stopColor: 'rgba(255, 255, 255, 0.9)' }} />
@@ -340,15 +357,19 @@ function RouteAnimation({ children, onAnimationComplete }) {
             </g>
           </svg>
 
-          {/* Logo Reveal */}
+          {/* Logo Reveal - KORJATTU */}
           <div className="logo-reveal">
             <img 
-              src="/src/assets/Logo.png" 
+              src={logoImage}
               alt="Logo" 
               onError={(e) => {
+                console.error('Logo lataus epäonnistui:', e);
                 // Fallback jos logo ei lataudu
                 e.target.style.display = 'none';
-                e.target.parentElement.innerHTML = '<div style="width: 160px; height: 160px; border: 3px solid #1CB1CF; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1CB1CF; font-size: 24px;">LOGO</div>';
+                const fallback = document.createElement('div');
+                fallback.style.cssText = 'width: 160px; height: 160px; border: 3px solid #1CB1CF; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1CB1CF; font-size: 24px; font-weight: bold;';
+                fallback.textContent = 'LOGO';
+                e.target.parentElement.appendChild(fallback);
               }}
             />
           </div>
@@ -357,9 +378,16 @@ function RouteAnimation({ children, onAnimationComplete }) {
     );
   }
 
-  // SPLASH PHASE: Backend nukkuu, näytetään splash
+  // SPLASH PHASE: Backend nukkuu, näytetään splash - FADE IN
   if (animationPhase === 'splash') {
-    return children;
+    return (
+      <div 
+        className="transition-opacity duration-500"
+        style={{ opacity: 1 }}
+      >
+        {children}
+      </div>
+    );
   }
 
   // READY PHASE: Animaatio valmis

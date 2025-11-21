@@ -24,7 +24,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
         return;
       }
 
-      // 3. Generoi uniikki satunnaispolku
+      // 3. Generoi uniikki satunnaispolku (yksinkertaistettu versio alkuperäisestä)
       generateSpiralPath();
 
       // 4. Suorita animaatiosykli
@@ -67,14 +67,10 @@ function RouteAnimation({ children, onAnimationComplete }) {
     }
   };
 
+  // Yksinkertaistettu spiraalireitin generointi alkuperäisestä versiosta
   const generateSpiralPath = () => {
-    const vbWidth = 800;
-    const vbHeight = 600;
-    const centerX = vbWidth / 2;
-    const centerY = vbHeight / 2;
-
-    // Apufunktio satunnaisluvulle välillä min-max
-    const randomRange = (min, max) => Math.random() * (max - min) + min;
+    const centerX = 400;
+    const centerY = 300;
 
     const getPoint = (angleInDegrees, radius) => {
       const angleInRadians = (angleInDegrees * Math.PI) / 180;
@@ -92,40 +88,22 @@ function RouteAnimation({ children, onAnimationComplete }) {
       };
     };
 
-    // 1. Satunnainen aloituskulma (pyörittää koko spiraalia)
     const startAngle = Math.random() * 360;
-
-    // 2. Satunnaiset säteet (muuttaa spiraalin laajuutta hieman joka kerta)
-    // Base values: 260, 130, 50. Varianssi +/- 20px
-    const outerRadius = 260 + randomRange(-20, 20); 
-    const midRadius = 130 + randomRange(-15, 15);
-    const innerRadius = 50 + randomRange(-5, 5);
-
-    // 3. Satunnaiset kulmien välit (muuttaa spiraalin "tiheyttä")
-    // Base step: 100 astetta. Varianssi +/- 15 astetta
-    const angleStep1 = 100 + randomRange(-15, 15);
-    const angleStep2 = 100 + randomRange(-15, 15);
-    // Viimeinen käännös kohti keskustaa
-    const angleStep3 = 90 + randomRange(-10, 10); 
-
-    const p1 = getPoint(startAngle, outerRadius);
     
-    const angle2 = startAngle + angleStep1;
-    const p2 = getPoint(angle2, midRadius);
-    
-    const angle3 = angle2 + angleStep2;
-    const p3 = getPoint(angle3, innerRadius);
-    
-    const angle4 = angle3 + angleStep3;
-    const p4 = { x: centerX, y: centerY }; // Päättyy aina tasan keskelle
+    const p1 = getPoint(startAngle, 700);
+    const angle2 = startAngle + 80;
+    const p2 = getPoint(angle2, 350);
+    const angle3 = angle2 + 80;
+    const p3 = getPoint(angle3, 150);
+    const angle4 = angle3 + 60;
+    const p4 = { x: centerX, y: centerY };
 
-    // 4. Satunnaiset tangentit (muuttaa kurvien "löysyyttä" tai "kireyttä")
-    const t1 = getTangentVector(startAngle, 100 + randomRange(-20, 20));
-    const t2_in = getTangentVector(angle2, -(80 + randomRange(-15, 15)));
-    const t2_out = getTangentVector(angle2, 80 + randomRange(-15, 15));
-    const t3_in = getTangentVector(angle3, -(40 + randomRange(-10, 10)));
-    const t3_out = getTangentVector(angle3, 40 + randomRange(-10, 10));
-    const t4_in = getTangentVector(angle4, -(30 + randomRange(-5, 5)));
+    const t1 = getTangentVector(startAngle, 200);
+    const t2_in = getTangentVector(angle2, -150);
+    const t2_out = getTangentVector(angle2, 150);
+    const t3_in = getTangentVector(angle3, -80);
+    const t3_out = getTangentVector(angle3, 80);
+    const t4_in = getTangentVector(angle4, -50);
 
     const path = `
       M ${p1.x.toFixed(1)},${p1.y.toFixed(1)}
@@ -140,14 +118,16 @@ function RouteAnimation({ children, onAnimationComplete }) {
         ${p4.x.toFixed(1)},${p4.y.toFixed(1)}
     `;
 
-    // Päivitä DOM
+    // Päivitä SVG-polku
     const roadPath = document.getElementById('road-path');
-    if (roadPath) roadPath.setAttribute('d', path);
-
-    const container = document.getElementById('animation-container');
-    if (container) {
-      const trimmed = path.replace(/\s+/g, ' ').trim().replace(/'/g, "\\'");
-      container.style.setProperty('--motion-path', `path('${trimmed}')`);
+    if (roadPath) {
+      roadPath.setAttribute('d', path);
+      
+      // Päivitä CSS custom property autoille
+      const container = document.getElementById('animation-container');
+      if (container) {
+        container.style.setProperty('--motion-path', `path('${path.replace(/\s+/g, ' ').trim()}')`);
+      }
     }
   };
 

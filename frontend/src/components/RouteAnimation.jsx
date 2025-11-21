@@ -360,32 +360,24 @@ function RouteAnimation({ children, onAnimationComplete }) {
           {/* Logo Reveal */}
           <div className="logo-reveal">
             <img 
-              src="/src/assets/Logo.png"
+              src={`${import.meta.env.BASE_URL}src/assets/Logo.png`}
               alt="Logo" 
-              onLoad={() => console.log('Logo loaded successfully')}
+              onLoad={() => console.log('✅ Logo loaded successfully')}
               onError={(e) => {
-                console.error('Logo lataus epäonnistui, kokeillaan vaihtoehtoista polkua');
-                // Kokeile eri polkuja
-                const paths = [
-                  './assets/Logo.png',
-                  '../assets/Logo.png',
-                  '/assets/Logo.png',
-                  'src/assets/Logo.png'
-                ];
-                
-                const currentSrc = e.target.src;
-                const nextPath = paths.find(p => !currentSrc.includes(p));
-                
-                if (nextPath) {
-                  e.target.src = nextPath;
-                } else {
-                  // Fallback
-                  e.target.style.display = 'none';
-                  const fallback = document.createElement('div');
-                  fallback.style.cssText = 'width: 160px; height: 160px; border: 3px solid #1CB1CF; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1CB1CF; font-size: 24px; font-weight: bold; background: #1A1A1A;';
-                  fallback.textContent = 'LOGO';
-                  e.target.parentElement.appendChild(fallback);
+                console.error('❌ Logo lataus epäonnistui:', e.target.src);
+                // Kokeile absolute path
+                if (!e.target.dataset.tried) {
+                  e.target.dataset.tried = 'true';
+                  e.target.src = '/src/assets/Logo.png';
+                  return;
                 }
+                
+                // Fallback jos mikään ei toimi
+                e.target.style.display = 'none';
+                const fallback = document.createElement('div');
+                fallback.style.cssText = 'width: 160px; height: 160px; border: 3px solid #1CB1CF; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1CB1CF; font-size: 24px; font-weight: bold; background: #1A1A1A;';
+                fallback.textContent = 'LOGO';
+                e.target.parentElement.appendChild(fallback);
               }}
             />
           </div>

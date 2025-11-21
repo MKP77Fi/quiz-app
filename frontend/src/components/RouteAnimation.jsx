@@ -1,35 +1,23 @@
 // src/components/RouteAnimation.jsx
 import { useState, useEffect } from 'react';
-import Logo from '../assets/Logo.png'; // <-- oikea import (oletus: src/components -> ../assets)
+import Logo from '../assets/Logo.png';
 
 /**
  * RouteAnimation - Spiraalireitti logo reveal animaatio
- *
- * Flow:
- * 1. Näyttää spiraalireittianimaation (7s)
- * 2. Tarkistaa backendin tilan samaan aikaan
- * 3a. Jos backend vastaa → skip splash, suoraan sovellukseen
- * 3b. Jos backend ei vastaa → näytä SplashScreen
  */
 function RouteAnimation({ children, onAnimationComplete }) {
-  const [animationPhase, setAnimationPhase] = useState('intro'); // 'intro' | 'splash' | 'ready'
+  const [animationPhase, setAnimationPhase] = useState('intro');
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
     const runAnimation = async () => {
-      // Odota että DOM ja tyylit ovat täysin valmiit
+      // Odota DOM
       await new Promise(resolve => {
-        if (document.readyState === 'complete') {
-          resolve();
-        } else {
-          window.addEventListener('load', resolve, { once: true });
-        }
+        if (document.readyState === 'complete') resolve();
+        else window.addEventListener('load', resolve, { once: true });
       });
 
-      // Pieni viive varmuuden vuoksi
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Reduced motion -tarkistus
+      // Reduced motion check
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (prefersReducedMotion) {
         const isAwake = await checkBackend();
@@ -42,16 +30,16 @@ function RouteAnimation({ children, onAnimationComplete }) {
         return;
       }
 
-      // Generoi spiraali polku
+      // Generoi polku
       generateSpiralPath();
 
-      // VAIHE 1: Animaatio (7s) ja backend-tarkistus samanaikaisesti
+      // VAIHE 1: Animaatio + Viive + Backend check
+      // KORJAUS 3: Nostettu viive 7000ms -> 9500ms, jotta logolle jää aikaa näkyä
       const [_, isAwake] = await Promise.all([
-        new Promise(resolve => setTimeout(resolve, 7000)),
+        new Promise(resolve => setTimeout(resolve, 9500)), 
         checkBackend()
       ]);
 
-      // Aloita fade-out ennen siirtymää
       setFadeOut(true);
       await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -65,58 +53,36 @@ function RouteAnimation({ children, onAnimationComplete }) {
 
     runAnimation();
 
-    // Re-generate path on resize to keep everything centered/responsiivisena
-    const handleResize = () => {
-      // Debounce vähän
-      clearTimeout(handleResize._t);
-        handleResize._t = setTimeout(() => generateSpiralPath(), 150);
-
-    };
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
+    // Resize ei enää tarvitse debouncea tai uudelleenlaskentaa niin aggressiivisesti,
+    // koska käytämme SVG:n viewBox-koordinaatteja, emme pikseleitä.
+    // Voimme silti pitää sen varmuuden vuoksi, jos haluamme "uuden satunnaisen reitin" koon muuttuessa.
+    // Tässä versiossa se on jätetty pois turhana renderöinnin välttämiseksi, koska SVG skaalautuu CSS:llä.
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onAnimationComplete]);
 
-  // Tarkista onko backend hereillä
   const checkBackend = async () => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
-
       const response = await fetch(`${apiUrl}/`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
         signal: controller.signal
       });
-
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
-      console.log('Backend sleeping, will show splash screen');
       return false;
     }
   };
 
-  // Spiraalireitin generointifunktio (nyt käyttää SVG:n viewBox-arvoja, ei kovakoodattuja center-arvoja)
+  // KORJAUS 1: Käytetään aina kiinteää 800x600 koordinaatistoa laskentaan.
+  // SVG:n viewBox hoitaa skaalauksen ruudulle. Tämä korjaa keskitysongelman.
   const generateSpiralPath = () => {
-    const svgEl = document.querySelector('#animation-container svg');
-    if (!svgEl) return;
-
-    // Try get viewBox; fallback to bounding box
-    let vbWidth = 800;
-    let vbHeight = 600;
-    if (svgEl.viewBox && svgEl.viewBox.baseVal) {
-      vbWidth = svgEl.viewBox.baseVal.width || vbWidth;
-      vbHeight = svgEl.viewBox.baseVal.height || vbHeight;
-    } else {
-      const rect = svgEl.getBoundingClientRect();
-      vbWidth = rect.width || vbWidth;
-      vbHeight = rect.height || vbHeight;
-    }
-
+    const vbWidth = 800;
+    const vbHeight = 600;
     const centerX = vbWidth / 2;
     const centerY = vbHeight / 2;
 
@@ -137,26 +103,27 @@ function RouteAnimation({ children, onAnimationComplete }) {
     };
 
     const startAngle = Math.random() * 360;
-
-    // Skaalatut radit suhteessa viewBoxiin (aiemmin kovakoodatut isot arvot saattoivat venyttää vasemmalle)
-    const outerRadius = Math.min(vbWidth, vbHeight) * 0.9 / 2; // suurin radius
-    const midRadius = outerRadius * 0.5;
-    const innerRadius = outerRadius * 0.22;
+    
+    // Radius arvot optimoitu 800x600 viewBoxille
+    const outerRadius = 280; 
+    const midRadius = 140;
+    const innerRadius = 60;
 
     const p1 = getPoint(startAngle, outerRadius);
-    const angle2 = startAngle + 80;
+    const angle2 = startAngle + 100; // Hieman tiukempi kurvi
     const p2 = getPoint(angle2, midRadius);
-    const angle3 = angle2 + 80;
+    const angle3 = angle2 + 100;
     const p3 = getPoint(angle3, innerRadius);
-    const angle4 = angle3 + 60;
+    const angle4 = angle3 + 90;
     const p4 = { x: centerX, y: centerY };
 
-    const t1 = getTangentVector(startAngle, outerRadius * 0.28);
-    const t2_in = getTangentVector(angle2, -midRadius * 0.43);
-    const t2_out = getTangentVector(angle2, midRadius * 0.43);
-    const t3_in = getTangentVector(angle3, -innerRadius * 0.45);
-    const t3_out = getTangentVector(angle3, innerRadius * 0.45);
-    const t4_in = getTangentVector(angle4, -Math.max(innerRadius * 0.25, 20));
+    // Tangenttien pituudet hienosäädetty pehmeämmiksi
+    const t1 = getTangentVector(startAngle, 100);
+    const t2_in = getTangentVector(angle2, -80);
+    const t2_out = getTangentVector(angle2, 80);
+    const t3_in = getTangentVector(angle3, -40);
+    const t3_out = getTangentVector(angle3, 40);
+    const t4_in = getTangentVector(angle4, -30);
 
     const path = `
       M ${p1.x.toFixed(1)},${p1.y.toFixed(1)}
@@ -171,22 +138,16 @@ function RouteAnimation({ children, onAnimationComplete }) {
         ${p4.x.toFixed(1)},${p4.y.toFixed(1)}
     `;
 
-    // Päivitä SVG-polku
     const roadPath = document.getElementById('road-path');
-    if (roadPath) {
-      roadPath.setAttribute('d', path);
-    }
+    if (roadPath) roadPath.setAttribute('d', path);
 
-    // Päivitä CSS custom property autoille (offset-path)
     const container = document.getElementById('animation-container');
     if (container) {
-      // Trim whitespace and escape single quotes in path
       const trimmed = path.replace(/\s+/g, ' ').trim().replace(/'/g, "\\'");
       container.style.setProperty('--motion-path', `path('${trimmed}')`);
     }
   };
 
-  // INTRO PHASE: Spiraalireitti animaatio
   if (animationPhase === 'intro') {
     return (
       <div
@@ -194,99 +155,72 @@ function RouteAnimation({ children, onAnimationComplete }) {
         style={{ opacity: fadeOut ? 0 : 1 }}
       >
         <style>{`
-          /* Animation container - keskitetty ja responsiivinen */
           #animation-container {
             position: relative;
+            /* Containerin koko on nyt responsiivinen, mutta suhteet säilyvät */
+            width: 100%; 
+            max-width: 800px;
+            aspect-ratio: 4/3;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 800px;            /* perus-koko (skaalautuu alas) */
-            height: 600px;
-            max-width: 90vw;
-            max-height: 80vh;
           }
 
-          /* SVG täyttää containerin mutta käsittelee koordinaatit viewBoxin mukaan */
           #animation-container svg {
             width: 100%;
             height: 100%;
             overflow: visible;
-            display: block;
           }
 
-          /* Reitti */
           #road-path {
             fill: none;
             stroke: #1CB1CF;
             stroke-width: 4;
             stroke-linecap: round;
-            filter: drop-shadow(0 0 5px #1CB1CF) drop-shadow(0 0 15px #1CB1CF);
+            filter: drop-shadow(0 0 5px #1CB1CF);
             stroke-dasharray: 6000;
             stroke-dashoffset: 6000;
             animation: drawPath 7s ease-in-out forwards;
           }
 
-          /* Autot: offset-path käyttää --motion-path muuttujaa, containerissa */
+          /* KORJAUS 2: offset-anchor lisätty ja offset-path varmistus */
           .car-group {
-            /* offset-path kutsuu path() joka on asetettu container.property '--motion-path' */
             offset-path: var(--motion-path);
             offset-distance: 0%;
             offset-rotate: auto 0deg;
-            animation: driveCar 7s ease-in-out forwards, fadeOutCar 0.8s ease-in 6.5s forwards;
-            /* varmista että transform-origin toimii SVG-g:lle */
-            transform-box: fill-box;
+            /* Tärkeä: lukitsee auton keskipisteen reitille */
+            offset-anchor: center; 
             transform-origin: center;
+            transform-box: fill-box;
+            
+            animation: driveCar 7s ease-in-out forwards, fadeOutCar 0.5s ease-in 6.5s forwards;
             will-change: offset-distance, transform, opacity;
           }
 
-          .ghost-car {
-            opacity: 0;
-            mix-blend-mode: screen;
-          }
-
+          /* ... Ghost cars ... */
+          .ghost-car { opacity: 0; mix-blend-mode: screen; }
           .ghost-1 { animation-delay: 0.04s; opacity: 0.5 !important; }
           .ghost-2 { animation-delay: 0.08s; opacity: 0.35 !important; }
           .ghost-3 { animation-delay: 0.12s; opacity: 0.2 !important; }
           .ghost-4 { animation-delay: 0.16s; opacity: 0.1 !important; }
 
-          /* Auton grafiikka */
-          .car-body {
-            fill: #000;
-            stroke: #1CB1CF;
-            stroke-width: 2;
-          }
+          .car-body { fill: #000; stroke: #1CB1CF; stroke-width: 2; }
+          .taillight { fill: #FF0000; filter: drop-shadow(0 0 5px #FF0000); }
+          .headlight { fill: url(#lightGradient); opacity: 0.6; }
+          .taxi-sign { fill: #FFD700; filter: drop-shadow(0 0 6px #FFD700); }
 
-          .taillight {
-            fill: #FF0000;
-            filter: drop-shadow(0 0 5px #FF0000);
-          }
+          .ghost-car .car-body { stroke-width: 1; stroke-opacity: 0.2; fill: none; }
 
-          .headlight {
-            fill: url(#lightGradient);
-            opacity: 0.6;
-          }
-
-          .taxi-sign {
-            fill: #FFD700;
-            filter: drop-shadow(0 0 6px #FFD700);
-          }
-
-          .ghost-car .car-body {
-            stroke-width: 1;
-            stroke-opacity: 0.2;
-            fill: none;
-          }
-          .ghost-car .taxi-sign { opacity: 0.4; }
-          .ghost-car .headlight { opacity: 0.2; }
-
-          /* Logo reveal (keskitetty suhteessa animation-containerin sisään) */
+          /* KORJAUS 3 (CSS): Logo alkaa ilmestyä aiemmin (6.0s) ja on keskellä */
           .logo-reveal {
             position: absolute;
             top: 50%;
             left: 50%;
+            /* Käytetään translatea keskittämiseen varmasti */
             transform: translate(-50%, -50%);
             opacity: 0;
-            animation: revealLogo 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 6.8s forwards;
+            /* Aloitus 6.0s (kun auto on saapumassa maaliin) */
+            animation: revealLogo 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 6.0s forwards;
             pointer-events: none;
             z-index: 100;
             display: flex;
@@ -295,36 +229,24 @@ function RouteAnimation({ children, onAnimationComplete }) {
           }
 
           .logo-reveal img {
-            width: 160px;
-            height: 160px;
+            width: 180px; /* Hieman isompi logo */
+            height: 180px;
             object-fit: contain;
             filter: drop-shadow(0 0 20px rgba(28, 177, 207, 0.6));
-            display: block;
           }
 
-          /* Keyframes */
           @keyframes driveCar {
             0% { offset-distance: 0%; }
             100% { offset-distance: 100%; }
           }
-
           @keyframes drawPath {
             0% { stroke-dashoffset: 6000; }
             100% { stroke-dashoffset: 0; }
           }
-
           @keyframes fadeOutCar {
-            from {
-              opacity: 1;
-              transform: scale(1);
-            }
-            to {
-              opacity: 0;
-              transform: scale(2);
-              filter: blur(10px);
-            }
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(2); filter: blur(10px); }
           }
-
           @keyframes revealLogo {
             0% {
               opacity: 0;
@@ -338,17 +260,13 @@ function RouteAnimation({ children, onAnimationComplete }) {
             }
           }
 
-          /* Reduced motion support */
           @media (prefers-reduced-motion: reduce) {
-            #road-path,
-            .car-group,
-            .logo-reveal {
-              animation: none !important;
-            }
+            #road-path, .car-group, .logo-reveal { animation: none !important; }
           }
         `}</style>
 
         <div id="animation-container" aria-hidden>
+          {/* ViewBox on kiinteä 800x600, CSS skaalaa tämän */}
           <svg viewBox="0 0 800 600" role="img" aria-label="Animation">
             <defs>
               <linearGradient id="lightGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -357,87 +275,46 @@ function RouteAnimation({ children, onAnimationComplete }) {
               </linearGradient>
             </defs>
 
-            {/* Reitti */}
             <path id="road-path" d="" />
 
-            {/* Haamu-autot */}
-            <g className="car-group ghost-car ghost-4">
-              <use href="#car-shape" />
-            </g>
-            <g className="car-group ghost-car ghost-3">
-              <use href="#car-shape" />
-            </g>
-            <g className="car-group ghost-car ghost-2">
-              <use href="#car-shape" />
-            </g>
-            <g className="car-group ghost-car ghost-1">
-              <use href="#car-shape" />
-            </g>
+            {/* Ghost cars */}
+            {[4, 3, 2, 1].map(i => (
+              <g key={i} className={`car-group ghost-car ghost-${i}`}>
+                <use href="#car-shape" />
+              </g>
+            ))}
 
             {/* Pääauto */}
             <g id="main-car" className="car-group">
-              <g id="car-shape" transform="translate(0,0)">
-                {/* Ajovalot */}
+              {/* Auton muoto on piirretty origon (0,0) ympärille */}
+              <g id="car-shape">
                 <path d="M 20,-10 L 140,-40 L 140,10 Z" fill="url(#lightGradient)" opacity="0.3" />
                 <path d="M 20,10 L 140,-10 L 140,40 Z" fill="url(#lightGradient)" opacity="0.3" />
-
-                {/* Runko */}
                 <rect x="-20" y="-15" width="45" height="30" rx="5" className="car-body" />
-
-                {/* Tuulilasi */}
                 <rect x="5" y="-12" width="5" height="24" fill="#1CB1CF" opacity="0.3" />
-
-                {/* Takavalot */}
                 <rect x="-22" y="-14" width="4" height="8" rx="1" className="taillight" />
                 <rect x="-22" y="6" width="4" height="8" rx="1" className="taillight" />
-
-                {/* Kyltti */}
                 <rect x="-10" y="-6" width="12" height="12" rx="2" className="taxi-sign" />
               </g>
             </g>
           </svg>
 
-          {/* Logo Reveal */}
-          <div className="logo-reveal" aria-hidden={false}>
-            <img
-              src={Logo}
-              alt="Logo"
-              onLoad={() => console.log('✅ Logo loaded successfully')}
-              onError={(e) => {
-                console.error('❌ Logo load failed:', (e.target && e.target.src) || e);
-                const img = e.target;
-                if (img) {
-                  // Poista kuvasta näkyvyys, lisää yksinkertainen fallback
-                  img.style.display = 'none';
-                  if (!img.parentElement.querySelector('.logo-fallback')) {
-                    const fallback = document.createElement('div');
-                    fallback.className = 'logo-fallback';
-                    fallback.style.cssText = 'width:160px;height:160px;border:3px solid #1CB1CF;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#1CB1CF;font-size:24px;font-weight:bold;background:#1A1A1A;';
-                    fallback.textContent = 'LOGO';
-                    img.parentElement.appendChild(fallback);
-                  }
-                }
-              }}
-            />
+          <div className="logo-reveal">
+            <img src={Logo} alt="Logo" onError={(e) => { e.target.style.display='none'; }} />
           </div>
         </div>
       </div>
     );
   }
 
-  // SPLASH PHASE: Backend nukkuu, näytetään splash - FADE IN
   if (animationPhase === 'splash') {
     return (
-      <div
-        className="transition-opacity duration-500"
-        style={{ opacity: 1 }}
-      >
+      <div className="transition-opacity duration-500" style={{ opacity: 1 }}>
         {children}
       </div>
     );
   }
 
-  // READY PHASE: Animaatio valmis (ei renderöi mitään, siirrytään sovellukseen)
   return null;
 }
 

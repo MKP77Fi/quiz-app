@@ -24,7 +24,7 @@ function RouteAnimation({ children, onAnimationComplete }) {
         return;
       }
 
-      // 3. Generoi uniikki satunnaispolku (yksinkertaistettu versio alkuperäisestä)
+      // 3. Generoi uniikki satunnaispolku
       generateSpiralPath();
 
       // 4. Suorita animaatiosykli
@@ -67,66 +67,101 @@ function RouteAnimation({ children, onAnimationComplete }) {
     }
   };
 
-  // Yksinkertaistettu spiraalireitin generointi alkuperäisestä versiosta
+  // --- UUSI DYNAAMINEN REITTIGENERAATTORI ---
   const generateSpiralPath = () => {
     const centerX = 400;
     const centerY = 300;
-
-    const getPoint = (angleInDegrees, radius) => {
-      const angleInRadians = (angleInDegrees * Math.PI) / 180;
-      return {
-        x: centerX + Math.cos(angleInRadians) * radius,
-        y: centerY + Math.sin(angleInRadians) * radius
-      };
-    };
-
-    const getTangentVector = (angleInDegrees, length) => {
-      const angleInRadians = ((angleInDegrees + 90) * Math.PI) / 180;
-      return {
-        x: Math.cos(angleInRadians) * length,
-        y: Math.sin(angleInRadians) * length
-      };
-    };
-
-    const startAngle = Math.random() * 360;
     
-    const p1 = getPoint(startAngle, 700);
-    const angle2 = startAngle + 80;
-    const p2 = getPoint(angle2, 350);
-    const angle3 = angle2 + 80;
-    const p3 = getPoint(angle3, 150);
-    const angle4 = angle3 + 60;
-    const p4 = { x: centerX, y: centerY };
+    // Apufunktio pisteen laskemiseen kulman ja säteen perusteella
+    const getPoint = (angleDeg, radius) => {
+      const rad = (angleDeg * Math.PI) / 180;
+      return {
+        x: centerX + Math.cos(rad) * radius,
+        y: centerY + Math.sin(rad) * radius
+      };
+    };
 
-    const t1 = getTangentVector(startAngle, 200);
-    const t2_in = getTangentVector(angle2, -150);
-    const t2_out = getTangentVector(angle2, 150);
-    const t3_in = getTangentVector(angle3, -80);
-    const t3_out = getTangentVector(angle3, 80);
-    const t4_in = getTangentVector(angle4, -50);
+    // Apufunktio tangenttivektorille (kurvin "kahva")
+    const getTangent = (angleDeg, length) => {
+      // Tangentti on 90 astetta kulmasta (jotta auto kulkee "tietä pitkin" eikä poikittain)
+      const rad = ((angleDeg + 90) * Math.PI) / 180;
+      return {
+        x: Math.cos(rad) * length,
+        y: Math.sin(rad) * length
+      };
+    };
 
-    const path = `
-      M ${p1.x.toFixed(1)},${p1.y.toFixed(1)}
-      C ${(p1.x + t1.x).toFixed(1)},${(p1.y + t1.y).toFixed(1)}
-        ${(p2.x + t2_in.x).toFixed(1)},${(p2.y + t2_in.y).toFixed(1)}
-        ${p2.x.toFixed(1)},${p2.y.toFixed(1)}
-      C ${(p2.x + t2_out.x).toFixed(1)},${(p2.y + t2_out.y).toFixed(1)}
-        ${(p3.x + t3_in.x).toFixed(1)},${(p3.y + t3_in.y).toFixed(1)}
-        ${p3.x.toFixed(1)},${p3.y.toFixed(1)}
-      C ${(p3.x + t3_out.x).toFixed(1)},${(p3.y + t3_out.y).toFixed(1)}
-        ${(p4.x + t4_in.x).toFixed(1)},${(p4.y + t4_in.y).toFixed(1)}
-        ${p4.x.toFixed(1)},${p4.y.toFixed(1)}
-    `;
+    // 1. Arvotaan mutkien määrä (1, 2 tai 3 segmenttiä)
+    const numSegments = Math.floor(Math.random() * 3) + 1;
+    
+    // 2. Arvotaan lähtökulma (mistä suunnasta auto tulee)
+    const startAngle = Math.random() * 360;
+
+    // 3. Arvotaan kiertosuunta (1 = myötäpäivään, -1 = vastapäivään)
+    const direction = Math.random() > 0.5 ? 1 : -1;
+
+    // Määritellään polun pisteet
+    // Lähtösäde on 800 (reilusti ruudun ulkopuolella), loppusäde on 0 (keskipiste)
+    let currentRadius = 800;
+    let currentAngle = startAngle;
+    let pathString = '';
+
+    // Lasketaan aloituspiste
+    const startPt = getPoint(currentAngle, currentRadius);
+    pathString += `M ${startPt.x.toFixed(1)},${startPt.y.toFixed(1)}`;
+
+    // Luodaan silmukassa Bezier-käyriä (C) kohti keskustaa
+    for (let i = 0; i < numSegments; i++) {
+      // Kuinka suuri osuus matkasta tämä segmentti on?
+      // Viimeinen segmentti menee aina nollaan.
+      const isLast = i === numSegments - 1;
+      
+      // Seuraava säde: pienenee kohti nollaa
+      // Esim. jos 3 segmenttiä: 800 -> 500 -> 200 -> 0
+      const nextRadius = isLast ? 0 : currentRadius * (0.4 + Math.random() * 0.3);
+      
+      // Seuraava kulma: käännetään tietty astemäärä (jyrkkyys vaihtelee)
+      // Arvotaan käännöksen suuruus per segmentti (esim. 60 - 120 astetta)
+      const angleStep = (60 + Math.random() * 60) * direction;
+      const nextAngle = currentAngle + angleStep;
+
+      const pStart = getPoint(currentAngle, currentRadius);
+      const pEnd = isLast ? { x: centerX, y: centerY } : getPoint(nextAngle, nextRadius);
+
+      // Tangenttien pituudet (vaikuttavat mutkan loivuuteen)
+      // Pituus skaalataan säteen mukaan, jotta mutkat tiukkenevat keskustaa kohti
+      const tLengthStart = currentRadius * 0.5; 
+      const tLengthEnd = isLast ? 0 : nextRadius * 0.5; // Keskipisteessä ei enää vauhtia ulospäin
+
+      const tStart = getTangent(currentAngle, tLengthStart * direction); 
+      const tEnd = getTangent(nextAngle, -tLengthEnd * direction); // Miinus, koska tullaan "sisään"
+
+      // Rakennetaan Bezier-komento: C cp1x,cp1y cp2x,cp2y x,y
+      const cp1 = { x: pStart.x + tStart.x, y: pStart.y + tStart.y };
+      const cp2 = { x: pEnd.x + tEnd.x, y: pEnd.y + tEnd.y };
+
+      pathString += `
+        C ${cp1.x.toFixed(1)},${cp1.y.toFixed(1)}
+          ${cp2.x.toFixed(1)},${cp2.y.toFixed(1)}
+          ${pEnd.x.toFixed(1)},${pEnd.y.toFixed(1)}
+      `;
+
+      // Päivitetään muuttujat seuraavaa kierrosta varten
+      currentRadius = nextRadius;
+      currentAngle = nextAngle;
+    }
 
     // Päivitä SVG-polku
     const roadPath = document.getElementById('road-path');
     if (roadPath) {
-      roadPath.setAttribute('d', path);
+      roadPath.setAttribute('d', pathString);
       
       // Päivitä CSS custom property autoille
       const container = document.getElementById('animation-container');
       if (container) {
-        container.style.setProperty('--motion-path', `path('${path.replace(/\s+/g, ' ').trim()}')`);
+        // Siistitään stringi CSS:ää varten
+        const cleanPath = pathString.replace(/\s+/g, ' ').trim();
+        container.style.setProperty('--motion-path', `path('${cleanPath}')`);
       }
     }
   };

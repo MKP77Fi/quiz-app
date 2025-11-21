@@ -16,6 +16,18 @@ function RouteAnimation({ children, onAnimationComplete }) {
 
   useEffect(() => {
     const runAnimation = async () => {
+      // Odota että DOM ja tyylit ovat täysin valmiit
+      await new Promise(resolve => {
+        if (document.readyState === 'complete') {
+          resolve();
+        } else {
+          window.addEventListener('load', resolve, { once: true });
+        }
+      });
+
+      // Lisäviive varmuuden vuoksi
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       // Tarkista reduced motion -asetus
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       
@@ -32,8 +44,8 @@ function RouteAnimation({ children, onAnimationComplete }) {
         return;
       }
 
-      // Generoi spiraalireitti pienen viiveen jälkeen (jotta DOM on valmis)
-      setTimeout(() => generateSpiralPath(), 100);
+      // Generoi spiraalireitti nyt kun kaikki on varmasti valmis
+      generateSpiralPath();
 
       // VAIHE 1: Animaatio (7s) ja backend-tarkistus samanaikaisesti
       const [_, isAwake] = await Promise.all([
@@ -348,32 +360,24 @@ function RouteAnimation({ children, onAnimationComplete }) {
           {/* Logo Reveal */}
           <div className="logo-reveal">
             <img 
-              src="/src/assets/Logo.png"
+              src={`${import.meta.env.BASE_URL}src/assets/Logo.png`}
               alt="Logo" 
-              onLoad={() => console.log('Logo loaded successfully')}
+              onLoad={() => console.log('✅ Logo loaded successfully')}
               onError={(e) => {
-                console.error('Logo lataus epäonnistui, kokeillaan vaihtoehtoista polkua');
-                // Kokeile eri polkuja
-                const paths = [
-                  './assets/Logo.png',
-                  '../assets/Logo.png',
-                  '/assets/Logo.png',
-                  'src/assets/Logo.png'
-                ];
-                
-                const currentSrc = e.target.src;
-                const nextPath = paths.find(p => !currentSrc.includes(p));
-                
-                if (nextPath) {
-                  e.target.src = nextPath;
-                } else {
-                  // Fallback
-                  e.target.style.display = 'none';
-                  const fallback = document.createElement('div');
-                  fallback.style.cssText = 'width: 160px; height: 160px; border: 3px solid #1CB1CF; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1CB1CF; font-size: 24px; font-weight: bold; background: #1A1A1A;';
-                  fallback.textContent = 'LOGO';
-                  e.target.parentElement.appendChild(fallback);
+                console.error('❌ Logo lataus epäonnistui:', e.target.src);
+                // Kokeile absolute path
+                if (!e.target.dataset.tried) {
+                  e.target.dataset.tried = 'true';
+                  e.target.src = '/src/assets/Logo.png';
+                  return;
                 }
+                
+                // Fallback jos mikään ei toimi
+                e.target.style.display = 'none';
+                const fallback = document.createElement('div');
+                fallback.style.cssText = 'width: 160px; height: 160px; border: 3px solid #1CB1CF; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1CB1CF; font-size: 24px; font-weight: bold; background: #1A1A1A;';
+                fallback.textContent = 'LOGO';
+                e.target.parentElement.appendChild(fallback);
               }}
             />
           </div>

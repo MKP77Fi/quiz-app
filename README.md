@@ -1,124 +1,124 @@
-# 🧠 TSW Group – Ajolupaharjoittelu
+🧠 TSW Group – Ajolupaharjoittelu
 
-Tämä projekti on interaktiivinen verkkopohjainen **tentti- ja harjoittelusovellus**, joka on toteutettu osana **Taitotalon ohjelmistokehityskoulutusta**.  
-Sovelluksen tavoitteena on tarjota harjoittelijoille, opettajille ja ylläpidolle alusta kysymysten hallintaan, tenttien suorittamiseen ja käyttäjähallintaan turvallisesti.
+Tämä projekti on interaktiivinen verkkopohjainen tentti- ja harjoittelusovellus, joka on toteutettu osana Taitotalon ohjelmistokehityskoulutusta.Sovelluksen tavoitteena on tarjota harjoittelijoille, opettajille ja ylläpidolle alusta kysymysten hallintaan, tenttien suorittamiseen ja käyttäjähallintaan turvallisesti. Sovellus on julkaistu tuotantoon hyödyntäen pilvipalveluita.
 
----
+🧱 Arkkitehtuuri ja Teknologiat
 
-## 🧱 Rakenne
+Sovellus on jaettu kahteen erilliseen kokonaisuuteen (frontend ja backend), jotka kommunikoivat REST API:n välityksellä.
 
-| Osa | Teknologia | Kuvaus |
-|------|-------------|---------|
-| **Backend** | Node.js + Express + MongoDB | Vastaa tietokantayhteyksistä, autentikoinnista ja API-rajapinnoista |
-| **Frontend** | React (Vite) + TailwindCSS | Käyttöliittymä, jossa käyttäjä kirjautuu, valitsee toimintatilan ja suorittaa tentin tai hallinnoi dataa |
+OsaTeknologiaHosting / AlustaKuvaus
+BackendNode.js + Express + MongoDBRenderVastaa tietokannasta, autentikoinnista ja API-rajapinnoista.
+FrontendReact (Vite) + TailwindCSSVercelResponsiivinen käyttöliittymä ja sovelluslogiikka.
+
+Hakemistorakenne
 
 quiz-app/
-├── backend/ # Node.js + MongoDB
-│ ├── controllers/ # Sovelluslogiikka
-│ ├── models/ # Mongoose-tietomallit
-│ ├── routes/ # REST API -reitit
-│ ├── middlewares/ # verifyToken, verifyAdmin
-│ └── server.js
+├── backend/           # Node.js + MongoDB (Render)
+│   ├── controllers/   # Sovelluslogiikka
+│   ├── models/        # Mongoose-tietomallit
+│   ├── routes/        # REST API -reitit
+│   └── server.js      # Serverin käynnistys
 │
-├── frontend/ # React + Vite
-│ ├── src/components/
-│ ├── src/utils/
-│ └── main.jsx
+├── frontend/          # React + Vite (Vercel)
+│   ├── src/components/# UI-komponentit (mm. RouteAnimation, SplashScreen)
+│   ├── src/views/     # Näkymät (Login, Quiz, Admin)
+│   └── main.jsx
 │
-└── docs/ # Dokumentaatio (määrittely, arkkitehtuuri, testaus)
+└── docs/              # Dokumentaatio
 
-yaml
-Kopioi koodi
+🚀 Render "Cold Start" & Herätysmekanismi
 
----
+Koska backendia ajetaan Renderin ilmaisversiolla, palvelin menee lepotilaan (spin down), kun sitä ei käytetä hetkeen. Uudelleenkäynnistys (Cold Start) voi kestää 30–60 sekuntia.
 
-## 🔐 Käyttäjäroolit ja kirjautuminen
+Tämän hallitsemiseksi sovellukseen on rakennettu älykäs latausmekanismi:
 
-- **Admin** – hallinnoi kysymyksiä, käyttäjiä ja tenttiasetuksia  
-- **Harjoittelija** – suorittaa harjoittelu- tai tenttitilan  
-- Käyttäjät tunnistetaan **JWT-tokenilla** (sessionStorage)  
-- Salasanat tallennetaan **bcrypt-hashattuina** MongoDB:hen
+Animaatio (RouteAnimation): Kun käyttäjä saapuu sivulle, näytetään autoanimaatio (n. 9 sekuntia). Samalla taustalla lähetetään herätyspyyntö backendiin.
 
----
+Splash Screen: Jos backend ei ole herännyt animaation aikana, käyttäjä siirretään latausruutuun, joka pollaa palvelinta kunnes yhteys on muodostettu.
 
-## 🧠 Sovelluksen tilat
+Ready-tila: Kun yhteys on varmistettu, käyttäjä päästetään kirjautumisnäkymään.
 
-| Tila | Kuvaus |
-|------|--------|
-| **Harjoittelutila** | Näyttää heti onko vastaus oikein, yksi kysymys kerrallaan |
-| **Tenttitila** | Ei palauta tulosta ennen lopetusta; pisteet ja aikaraja |
-| **Admin-hallinta** | Kysymysten ja käyttäjien CRUD-toiminnot, lokien katselu |
-| **Lokit** | Kaikki merkittävät tapahtumat tallennetaan MongoDB:hen (asetettavissa `LOG_TTL_DAYS`) |
+🔐 Käyttäjäroolit ja tietoturva
 
----
+Admin – hallinnoi kysymyksiä, käyttäjiä ja tenttiasetuksia.
 
-## ⚙️ Käyttöönotto
+Harjoittelija – suorittaa harjoittelu- tai tenttitilan.
 
-### 1️⃣ Backend
-```bash
+Autentikointi: Käyttäjät tunnistetaan JWT-tokenilla (HTTP header: Authorization: Bearer <token>).
+
+Salaukset: Salasanat tallennetaan bcrypt-hashattuina MongoDB:hen.
+
+⚙️ Kehitysympäristön käyttöönotto (Localhost)
+
+Jos haluat ajaa sovellusta paikallisesti omalla koneellasi:
+
+1️⃣ Backend
+
 cd backend
 npm install
-npm start
+npm run dev # tai npm start
 
-Luo tarvittaessa .env tiedosto .env.example -mallin pohjalta:
+
+Luo .env tiedosto backend -kansioon:
 
 MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>/<dbname>?retryWrites=true&w=majority
 PORT=3000
-JWT_SECRET=salainen_avain
+JWT_SECRET=salainen_avain_tahan
 LOG_TTL_DAYS=90
 
 2️⃣ Frontend
+
 cd frontend
 npm install
 npm run dev
 
+Luo .env tiedosto frontend -kansioon (tärkeä backend-yhteyden kannalta):
 
-Sovellus toimii:
+# Paikallisessa kehityksessä:
+VITE_API_URL=http://localhost:3000/api
+
+# Tuotannossa (Vercel-asetuksissa):
+# VITE_API_URL=https://sinun-backend-sovellus.onrender.com/api
+
+Sovellus toimii paikallisesti:
 
 Backend: http://localhost:3000
-
 Frontend: http://localhost:5173
 
+☁️ Tuotantoympäristö (Deployment)
+
+Sovellus on konfiguroitu toimimaan automaattisella CI/CD-putkella (tai manuaalisella deployauksella) seuraavasti:
+
+Backend (Render):
+
+Yhdistetty GitHub-repoon.
+Build Command: npm install
+Start Command: node server.js
+Environment Variables: Määritelty Renderin Dashboardissa (MONGODB_URI, JWT_SECRET, jne).
+
+Frontend (Vercel):
+
+Yhdistetty GitHub-repoon.
+Framework Preset: Vite
+Build Command: npm run build
+Output Directory: dist
+Environment Variables: VITE_API_URL osoittaa Renderin osoitteeseen.
+
 🧪 Testaus
-Postman
+
+Postman / Insomnia:
 
 Kirjautuminen: POST /api/auth/login
+CRUD-reitit: /api/questions, /api/users
+Huom: Muista lisätä saatu token headeriin testeissä.
 
-CRUD-reitit: /api/questions, /api/users, /api/settings, /api/logs
-
-Lisää header: Authorization: Bearer <token>
-
-Frontend
-
-Kirjaudu (admin tai harjoittelija)
-
-Harjoittelutila ja tenttitila testattavissa ModeSelectorin kautta
-
-Admin-hallinta: kysymykset, käyttäjät, asetukset ja lokit
-
-🔒 Tietoturva
-
-JWT-pohjainen autentikointi
-
-Bcrypt-salasanojen suojaus
-
-verifyToken ja verifyAdmin -middlewaret
-
-Ympäristömuuttujat pidetään versionhallinnan ulkopuolella
-
-🚧 Kehitystilanne
-
-Tämä on kehitysvaiheen versio.
-Seuraavaksi vuorossa:
-
-🧩 Käyttöliittymätestaus ja UX-parannukset
-
-🧠 Lokitietojen analytiikka
-
-📊 Mahdollinen raportointinäkymä
+Selaintasolla:Harjoittelutila ja tenttitila testattavissa käyttöliittymän kautta.
+Admin-näkymät: kysymykset, käyttäjät, asetukset ja lokit.
 
 📚 Lisätiedot
 
-Frontend README
+Tarkemmat ohjeet kunkin osion kehittämiseen löytyvät kansiokohtaisista ohjeista:
 
 Backend README
+
+Frontend README

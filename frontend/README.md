@@ -1,88 +1,120 @@
-## 💻 2. `frontend/README.md`
+🎨 Frontend – TSW Group Ajolupaharjoittelu
 
-```markdown
-# 🎨 Frontend – TSW Group Ajolupaharjoittelu
+React (Vite) -pohjainen käyttöliittymä, joka on optimoitu toimimaan Vercel-alustalla. Sovellus sisältää "älykkään" latausmekanismin, joka käsittelee backendin (Render) kylmäkäynnistykset käyttäjäystävällisesti.
 
-React (Vite) -pohjainen käyttöliittymä, jossa käyttäjät voivat kirjautua, valita toimintatilan (harjoittelu tai tentti) ja hallita kysymyksiä tai käyttäjiä rooliensa mukaan.
+🚀 Teknologia
 
----
+Osa
 
-## 🚀 Teknologia
+Kuvaus
 
-| Osa | Kuvaus |
-|------|---------|
-| React (Vite) | Pääkehys käyttöliittymälle |
-| TailwindCSS | Tyylittely ja layout |
-| React Router DOM | Reititys näkymien välillä |
-| Fetch API | Kommunikointi backendin kanssa |
-| Session Storage | JWT-tokenin tallennus selaimessa |
+React (Vite)
 
----
+Nopea frontend-kehys ja build-työkalu
 
-## 📂 Rakenne
+Vercel
+
+Tuotantoympäristön hosting
+
+TailwindCSS
+
+Responsiivinen tyylittely
+
+React Router
+
+Reititys näkymien välillä
+
+Fetch API
+
+Kommunikointi backendin kanssa
+
+Session Storage
+
+JWT-tokenin ja animaatiotilan tallennus
+
+📂 Rakenne ja uudet komponentit
 
 frontend/
 ├── src/
-│ ├── components/
-│ │ ├── LoginView.jsx
-│ │ ├── ModeSelector.jsx
-│ │ ├── PracticeView.jsx
-│ │ ├── QuizView.jsx
-│ │ ├── AdminDashboard.jsx
-│ │ ├── AdminView.jsx
-│ │ ├── UserManagementView.jsx
-│ │ ├── AdminQuizSettings.jsx
-│ │ └── AdminLogs.jsx
-│ ├── utils/api.js
-│ └── main.jsx
+│   ├── components/
+│   │   ├── RouteAnimation.jsx    # 🆕 Herättää backendin taustalla
+│   │   ├── SplashScreen.jsx      # 🆕 Pollaa backendia, jos herätys kestää
+│   │   ├── LoginView.jsx
+│   │   ├── ModeSelector.jsx
+│   │   ├── PracticeView.jsx
+│   │   ├── QuizView.jsx
+│   │   ├── AdminDashboard.jsx
+│   │   └── ... (Admin-hallintanäkymät)
+│   ├── utils/
+│   │   └── api.js                # API-kutsut (käyttää ympäristömuuttujia)
+│   └── main.jsx
 
-yaml
-Kopioi koodi
+🛌 Backendin herätysmekanismi (Render Cold Start)
 
----
+Koska backend pyörii Renderin ilmaisversiolla, se "nukahtaa" käyttämättömyyden jälkeen. Herääminen kestää n. 30–60 sekuntia. Frontend hallitsee tätä seuraavasti:
 
-## 🧠 Keskeiset näkymät
+RouteAnimation: Sovelluksen käynnistyessä näytetään n. 10 sekunnin auto-animaatio. Samalla taustalla lähetetään "ping"-pyyntö backendille.
 
-| Komponentti | Kuvaus |
-|--------------|---------|
-| **LoginView** | Kirjautuminen JWT-tokenilla |
-| **ModeSelector** | Valinta: harjoittelu / tentti / admin |
-| **PracticeView** | Näyttää heti vastauksen oikeellisuuden |
-| **QuizView** | Tentti aikarajalla ja tuloskooste lopuksi |
-| **AdminDashboard** | Päävalikko hallintanäkymään |
-| **AdminView** | Kysymysten CRUD |
-| **UserManagementView** | Käyttäjien CRUD |
-| **AdminQuizSettings** | Tentin kysymysmäärän ja aikarajan hallinta |
-| **AdminLogs** | Järjestelmän tapahtumien seuranta |
+SplashScreen: Jos backend ei ehdi vastata animaation aikana, siirrytään latausruutuun, joka yrittää yhteyttä toistuvasti (polling) kunnes backend vastaa (200 OK tai 404).
 
----
+Istunto: Tieto animaation katsomisesta tallennetaan sessionStorage:en, jotta sitä ei näytetä turhaan uudelleen saman istunnon aikana.
 
-## 🔄 API-yhteys
+⚙️ Asennus ja Ympäristömuuttujat
 
-Kaikki API-kutsut määritellään tiedostossa:
-src/utils/api.js
+Jotta frontend osaa keskustella backendin kanssa (joka on eri osoitteessa), on määriteltävä VITE_API_URL.
 
-bash
-Kopioi koodi
+1. Asennus
 
-Esimerkki:
-```js
-const API_URL = "http://localhost:3000/api";
-fetch(`${API_URL}/questions`, { headers: getHeaders() });
+npm install
+
+
+2. Konfiguraatio (.env)
+
+Luo juureen tiedosto .env:
+
+# Paikallinen kehitys:
+VITE_API_URL=http://localhost:3000/api
+
+# TAI Tuotanto (Vercel Environment Variable):
+# VITE_API_URL=[https://sinun-backend-sovellus.onrender.com/api](https://sinun-backend-sovellus.onrender.com/api)
+
+
+3. Käynnistys
+
+npm run dev
+
+
+🔄 API-yhteys
+
+Kaikki API-kutsut on keskitetty tai käyttävät ympäristömuuttujaa.
+Esimerkki (src/utils/api.js):
+
+// Hakee osoitteen .env -tiedostosta, fallback localhostiin
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
+export const getHeaders = () => {
+  const token = sessionStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    Authorization: token ? `Bearer ${token}` : "",
+  };
+};
+
+
 🎨 Tyylit ja ulkoasu
-TailwindCSS-pohjainen layout
 
-Komponenttikohtaisia inline-tyylejä käytetään korostuksiin
+TailwindCSS: Pääasiallinen tyylikirjasto.
 
-Päävärit määritelty :root-muuttujissa (var(--accent-orange), var(--accent-turquoise))
+Animaatiot: RouteAnimation käyttää SVG-polkuja ja CSS-animaatioita (@keyframes). SplashScreen käyttää scoped CSS -tyylejä varmistaakseen toimivuuden latausvaiheessa.
+
+Responsiivisuus: Suunniteltu toimimaan mobiilissa ja työpöydällä.
 
 🔧 Kehitystilanne
- Harjoittelu- ja tenttitilat toimivat
 
- Admin CRUD -näkymät
+[x] Tuotantovalmis: Build-prosessi optimoitu Vercelille.
 
- Lokinäkymä toimii reaaliajassa
+[x] UX: Cold start -viive piilotettu animaatiolla.
 
- UI-viimeistely (painikkeiden marginaalit, “Paluu”-painikkeet)
+[x] Toimintatilat: Harjoittelu, Tentti ja Admin-hallinta toimivat.
 
- Lopputestauksen aikaiset UX-muutokset
+[ ] Testaus: E2E-testaus (esim. Cypress) tulossa myöhemmin.

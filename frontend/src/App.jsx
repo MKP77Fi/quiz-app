@@ -11,14 +11,16 @@ import AdminDashboard from "./components/AdminDashboard";
 import UserManagementView from "./components/UserManagementView";
 import AdminQuizSettings from "./components/AdminQuizSettings";
 import AdminLogs from "./components/AdminLogs";
-import RouteAnimation from "./components/RouteAnimation"; // ✅ UUSI
-import SplashScreen from "./components/SplashScreen"; // ✅ UUSI
+import RouteAnimation from "./components/RouteAnimation";
+import SplashScreen from "./components/SplashScreen";
 
 function App() {
-  const [showAnimation, setShowAnimation] = useState(true); // ✅ UUSI
-  const [showSplash, setShowSplash] = useState(false); // ✅ UUSI
+  const [showAnimation, setShowAnimation] = useState(true);
+  // showSplash-tila on periaatteessa ylimääräinen tässä rakenteessa, 
+  // mutta pidetään se mukana jos haluat myöhemmin erillisen logiikan.
+  const [showSplash, setShowSplash] = useState(false); 
 
-  // ✅ UUSI: Tarkista onko animaatio jo nähty tässä sessiossa
+  // Tarkista onko animaatio jo nähty tässä sessiossa
   useEffect(() => {
     const animationSeen = sessionStorage.getItem('animationSeen');
     if (animationSeen) {
@@ -26,29 +28,27 @@ function App() {
     }
   }, []);
 
-  // ✅ UUSI: Kun animaatio valmis
-  const handleAnimationComplete = () => {
+  // ✅ KORJATTU LOGIIKKA: Yhteinen funktio, joka siirtää käyttäjän sovellukseen
+  const enterApplication = () => {
+    console.log("Siirrytään sovellukseen..."); // Debug
     sessionStorage.setItem('animationSeen', 'true');
-    setShowAnimation(false);
     setShowSplash(false);
+    setShowAnimation(false); // TÄMÄ on kriittinen muutos, jotta poistutaan animaationäkymästä
   };
 
-  // ✅ UUSI: Kun splash valmis
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-  };
-
-  // ✅ UUSI: Jos animaatio käynnissä
+  // Jos animaatio (tai sen sisällä oleva Splash) on käynnissä
   if (showAnimation) {
     return (
       <RouteAnimation 
-        onAnimationComplete={handleAnimationComplete}
+        onAnimationComplete={enterApplication} // Jos animaatio ehtii loppuun ja backend on hereillä
       >
-        {/* Jos backend nukkuu, näytetään splash Header + Footer kanssa */}
+        {/* Jos backend nukkuu animaation jälkeen, RouteAnimation renderöi tämän lapsen.
+            Kun SplashScreen saa yhteyden, se kutsuu enterApplication-funktiota.
+        */}
         <div className="flex flex-col min-h-screen bg-background text-text-primary">
           <Header />
           <main className="flex-grow">
-            <SplashScreen onReady={handleSplashComplete} />
+            <SplashScreen onReady={enterApplication} />
           </main>
           <Footer />
         </div>
@@ -56,20 +56,20 @@ function App() {
     );
   }
 
-  // ✅ UUSI: Jos splash käynnissä (backend heräsi animaation aikana mutta pitää odottaa)
+  // Varmuuden vuoksi erillinen splash-tila (jos state-hallinta muuttuu tulevaisuudessa)
   if (showSplash) {
     return (
       <div className="flex flex-col min-h-screen bg-background text-text-primary">
         <Header />
         <main className="flex-grow">
-          <SplashScreen onReady={handleSplashComplete} />
+          <SplashScreen onReady={enterApplication} />
         </main>
         <Footer />
       </div>
     );
   }
 
-  // ✅ Normaali sovellus (ei muutoksia alkuperäiseen)
+  // Varsinainen sovellus
   return (
     <div className="flex flex-col min-h-screen bg-background text-text-primary">
       <Header />

@@ -99,7 +99,7 @@ mongoose
             // UUSI: Käynnistetään Keep-Alive (vain tuotannossa)
             // RENDER_EXTERNAL_URL on Renderin automaattisesti tarjoama (tai itse asetettu) muuttuja
             if (process.env.NODE_ENV === 'production' || process.env.RENDER_EXTERNAL_URL) {
-                const myUrl = process.env.RENDER_EXTERNAL_URL || 'https://sinun-sovellus.onrender.com';
+                const myUrl = process.env.RENDER_EXTERNAL_URL || 'https://ajolupa-backend.onrender.com';
                 startKeepAlive(myUrl);
             }
         });

@@ -12,7 +12,7 @@ function AdminLogs() {
 
   const fetchLogs = async () => {
     // HAETAAN TOKEN PAIKALLISESTA MUISTISTA
-    const token = localStorage.getItem("token"); // Oletetaan, että token on tallennettu nimellä "token"
+    const token = sessionStorage.getItem("token"); // Käytetään sessionStoragea
 
     if (!token) {
         // Jos token puuttuu kokonaan (esim. uloskirjautunut), navigoidaan kirjautumissivulle.

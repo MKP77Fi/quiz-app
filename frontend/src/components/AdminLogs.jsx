@@ -11,28 +11,56 @@ function AdminLogs() {
   const navigate = useNavigate();
 
   const fetchLogs = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/logs`);
-      const data = await res.json();
+    // HAETAAN TOKEN PAIKALLISESTA MUISTISTA
+    const token = localStorage.getItem("token"); // Oletetaan, että token on tallennettu nimellä "token"
 
-      // ✅ Varmistetaan että data on taulukko
-      if (Array.isArray(data)) {
-        setLogs(data);
-      } else if (Array.isArray(data.data)) {
-        setLogs(data.data);
-      } else {
-        console.warn("Odottamaton vastausrakenne logeille:", data);
-        setLogs([]);
-      }
-
-      setError("");
-      setLoading(false);
-    } catch (err) {
-      console.error("Virhe logien latauksessa:", err);
-      setError("Virhe logien latauksessa. Tarkista palvelinyhteys.");
-      setLoading(false);
+    if (!token) {
+        // Jos token puuttuu kokonaan (esim. uloskirjautunut), navigoidaan kirjautumissivulle.
+        setError("Kirjautumista tarvitaan (Token puuttuu).");
+        setLoading(false);
+        // Joskus tässä kohtaa navigoidaan /login -sivulle, mutta jätetään navigointi pois nyt.
+        return; 
     }
-  };
+
+    try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/logs`, {
+            method: "GET",
+            // TÄRKEÄ MUUTOS: Lisätään token otsikkoon (Authorization Header)
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` // <--- TÄMÄ AVAIN RATKAISEE VIAN
+            }
+        });
+
+        // Jos palvelin palauttaa virheen (esim. 403 Forbidden), käsitellään se
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || `HTTP-virhe: ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        // Otetaan kantaa siihen, että Backend palauttaa nyt { total, count, logs }
+        // Backendin logController palauttaa { total, count, logs }
+        const logsArray = Array.isArray(data.logs) ? data.logs : [];
+
+        if (logsArray.length === 0) {
+             // Jos lokit palautuvat tyhjinä (mutta ilman 403-virhettä)
+             console.warn("Lokidata tyhjä tai odottamaton rakenne (oikea vastaus):", data);
+        }
+
+        setLogs(logsArray);
+        setError("");
+        setLoading(false);
+
+    } catch (err) {
+        console.error("Virhe logien latauksessa:", err);
+        // Näytetään tarkempi virhe käyttäjälle
+        setError(`Virhe logien latauksessa: ${err.message}.`); 
+        setLoading(false);
+        // Jos virhe on "Token puuttuu" tai "Ei oikeuksia", voimme ohjata käyttäjän kirjautumaan sisään.
+    }
+};
 
   useEffect(() => {
     fetchLogs();

@@ -1,124 +1,29 @@
-🧠 TSW Group – Ajolupaharjoittelu
+# 🚖 TSW Group – Ajolupaharjoittelu (Full Stack)
 
-Tämä projekti on interaktiivinen verkkopohjainen tentti- ja harjoittelusovellus, joka on toteutettu osana Taitotalon ohjelmistokehityskoulutusta.Sovelluksen tavoitteena on tarjota harjoittelijoille, opettajille ja ylläpidolle alusta kysymysten hallintaan, tenttien suorittamiseen ja käyttäjähallintaan turvallisesti. Sovellus on julkaistu tuotantoon hyödyntäen pilvipalveluita.
+Tämä repositorio sisältää TSW Groupin ajolupaharjoittelusovelluksen lähdekoodin. Sovellus on suunniteltu auttamaan taksinkuljettajia valmistautumaan ajolupakokeeseen.
 
-🧱 Arkkitehtuuri ja Teknologiat
+Järjestelmä koostuu kahdesta osasta:
+1.  **Backend (Node.js/Express):** Tietokanta, API ja logiikka.
+2.  **Frontend (React/Vite):** Käyttöliittymä ja harjoittelutoiminnot.
 
-Sovellus on jaettu kahteen erilliseen kokonaisuuteen (frontend ja backend), jotka kommunikoivat REST API:n välityksellä.
+---
 
-OsaTeknologiaHosting / AlustaKuvaus
-BackendNode.js + Express + MongoDBRenderVastaa tietokannasta, autentikoinnista ja API-rajapinnoista.
-FrontendReact (Vite) + TailwindCSSVercelResponsiivinen käyttöliittymä ja sovelluslogiikka.
+## 🛠️ Pikaohje kehittäjälle (Local Dev)
 
-Hakemistorakenne
+Seuraa näitä ohjeita saadaksesi projektin pyörimään omalla koneellasi.
 
-quiz-app/
-├── backend/           # Node.js + MongoDB (Render)
-│   ├── controllers/   # Sovelluslogiikka
-│   ├── models/        # Mongoose-tietomallit
-│   ├── routes/        # REST API -reitit
-│   └── server.js      # Serverin käynnistys
-│
-├── frontend/          # React + Vite (Vercel)
-│   ├── src/components/# UI-komponentit (mm. RouteAnimation, SplashScreen)
-│   ├── src/views/     # Näkymät (Login, Quiz, Admin)
-│   └── main.jsx
-│
-└── docs/              # Dokumentaatio
+### 1. Esivaatimukset
+* Node.js (versio 18 tai uudempi)
+* MongoDB Atlas -tietokantatunnukset (tai paikallinen MongoDB)
 
-🚀 Render "Cold Start" & Herätysmekanismi
+### 2. Asennus
+Aja projektin juuressa seuraava komento. Se asentaa tarvittavat kirjastot juureen, backendiin ja frontendiin yhdellä kertaa.
 
-Koska backendia ajetaan Renderin ilmaisversiolla, palvelin menee lepotilaan (spin down), kun sitä ei käytetä hetkeen. Uudelleenkäynnistys (Cold Start) voi kestää 30–60 sekuntia.
-
-Tämän hallitsemiseksi sovellukseen on rakennettu älykäs latausmekanismi:
-
-Animaatio (RouteAnimation): Kun käyttäjä saapuu sivulle, näytetään autoanimaatio (n. 9 sekuntia). Samalla taustalla lähetetään herätyspyyntö backendiin.
-
-Splash Screen: Jos backend ei ole herännyt animaation aikana, käyttäjä siirretään latausruutuun, joka pollaa palvelinta kunnes yhteys on muodostettu.
-
-Ready-tila: Kun yhteys on varmistettu, käyttäjä päästetään kirjautumisnäkymään.
-
-🔐 Käyttäjäroolit ja tietoturva
-
-Admin – hallinnoi kysymyksiä, käyttäjiä ja tenttiasetuksia.
-
-Harjoittelija – suorittaa harjoittelu- tai tenttitilan.
-
-Autentikointi: Käyttäjät tunnistetaan JWT-tokenilla (HTTP header: Authorization: Bearer <token>).
-
-Salaukset: Salasanat tallennetaan bcrypt-hashattuina MongoDB:hen.
-
-⚙️ Kehitysympäristön käyttöönotto (Localhost)
-
-Jos haluat ajaa sovellusta paikallisesti omalla koneellasi:
-
-1️⃣ Backend
-
-cd backend
-npm install
-npm run dev # tai npm start
-
-
-Luo .env tiedosto backend -kansioon:
-
-MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>/<dbname>?retryWrites=true&w=majority
+```bash
+npm run setup
+3. Ympäristömuuttujat (.env)Sinun tulee luoda kaksi .env-tiedostoa manuaalisesti, koska ne sisältävät salaisuuksia eivätkä ne ole Gitissä.A) Backend (/backend/.env):KoodinpätkäMONGODB_URI=mongodb+srv://... (Pyydä tämä ylläpidolta)
 PORT=3000
-JWT_SECRET=salainen_avain_tahan
-LOG_TTL_DAYS=90
-
-2️⃣ Frontend
-
-cd frontend
-npm install
-npm run dev
-
-Luo .env tiedosto frontend -kansioon (tärkeä backend-yhteyden kannalta):
-
-# Paikallisessa kehityksessä:
-VITE_API_URL=http://localhost:3000/api
-
-# Tuotannossa (Vercel-asetuksissa):
-# VITE_API_URL=https://sinun-backend-sovellus.onrender.com/api
-
-Sovellus toimii paikallisesti:
-
-Backend: http://localhost:3000
-Frontend: http://localhost:5173
-
-☁️ Tuotantoympäristö (Deployment)
-
-Sovellus on konfiguroitu toimimaan automaattisella CI/CD-putkella (tai manuaalisella deployauksella) seuraavasti:
-
-Backend (Render):
-
-Yhdistetty GitHub-repoon.
-Build Command: npm install
-Start Command: node server.js
-Environment Variables: Määritelty Renderin Dashboardissa (MONGODB_URI, JWT_SECRET, jne).
-
-Frontend (Vercel):
-
-Yhdistetty GitHub-repoon.
-Framework Preset: Vite
-Build Command: npm run build
-Output Directory: dist
-Environment Variables: VITE_API_URL osoittaa Renderin osoitteeseen.
-
-🧪 Testaus
-
-Postman / Insomnia:
-
-Kirjautuminen: POST /api/auth/login
-CRUD-reitit: /api/questions, /api/users
-Huom: Muista lisätä saatu token headeriin testeissä.
-
-Selaintasolla:Harjoittelutila ja tenttitila testattavissa käyttöliittymän kautta.
-Admin-näkymät: kysymykset, käyttäjät, asetukset ja lokit.
-
-📚 Lisätiedot
-
-Tarkemmat ohjeet kunkin osion kehittämiseen löytyvät kansiokohtaisista ohjeista:
-
-Backend README
-
-Frontend README
+JWT_SECRET=oma_salainen_dev_avain
+B) Frontend (/frontend/.env):KoodinpätkäVITE_API_URL=http://localhost:3000/api
+4. KäynnistysKäynnistä koko järjestelmä (sekä serveri että client) yhdellä komennolla projektin juuresta:Bashnpm run dev
+Frontend: http://localhost:5173Backend: http://localhost:3000☁️ Tuotantoympäristö & ArkkitehtuuriSovellus on jaettu kahteen eri pilvipalveluun suorituskyvyn optimoimiseksi.KomponenttiPalveluHuomioitavaaFrontendVercelStaattinen sivusto, nopea CDN.BackendRenderNode.js-palvelin (Free Tier). Menee nukkumaan 15min inaktiivisuuden jälkeen ("Cold Start").TietokantaMongoDB AtlasPilvitietokanta.Render "Cold Start" -huomioFrontend sisältää RouteAnimation-mekanismin, joka viihdyttää käyttäjää sen aikaa, kun Render-palvelin herää (n. 30-60s).🔐 Hallintapaneeli (Admin)Järjestelmässä on sisäänrakennettu Admin-käyttäjäliittymä kysymysten ja käyttäjien hallintaan.Kirjaudu sisään Admin-tunnuksilla nähdäksesi hallintatyökalut.Uuden Adminin luonti (jos tietokanta on tyhjä):node backend/scripts/createAdmin.js📁 Kansiorakenne/backend - Palvelin, API-reitit, Tietokantamallit./frontend - React-sovellus, Tyylit (Tailwind), Komponentit.

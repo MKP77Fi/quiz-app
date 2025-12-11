@@ -1,0 +1,112 @@
+/* frontend/src/index.css */
+
+/* 1. TAILWINDIN PERUSTAT */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 2. GLOBAALIT MUUTTUJAT (Määrittely luku 9.2 Visuaalinen ilme) */
+:root {
+  /* Tummateema (Dark Mode) oletuksena */
+  --background: #1a1a1a;       /* Tummanharmaa tausta */
+  --surface: #2a2a2a;          /* Korttien ja paneelien tausta */
+  
+  --text-primary: #ffffff;     /* Pääteksti */
+  --text-secondary: #a3a3a3;   /* Aputekstit */
+
+  /* Brändivärit (Poimittu TSW Groupin logosta/animaatiosta) */
+  --accent-turquoise: #1cb1cf; /* Päätoimintaväri */
+  --accent-orange: #ff6b35;    /* Huomioväri / Korostus */
+  
+  /* Tilavärit */
+  --success: #22c55e;          /* Vihreä (Oikein) */
+  --error: #ef4444;            /* Punainen (Väärin / Poista) */
+}
+
+/* 3. PERUSASETUKSET */
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  
+  /* Estetään "pomppiminen" latauksessa */
+  margin: 0;
+  min-height: 100vh;
+  
+  /* Pehmeämpi tekstin renderöinti */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 4. KOMPONENTIT (@layer components) 
+   Tämä mahdollistaa sen, että Reactissa voi kirjoittaa className="button" 
+   sen sijaan että kirjoittaisi joka kerta pitkän rimpsun Tailwind-luokkia.
+*/
+@layer components {
+  
+  /* Pääotsikot */
+  .title {
+    @apply text-2xl md:text-3xl font-bold mb-6 text-center text-white;
+  }
+
+  /* Kortit ja laatat (esim. Login, Kysymyskortti) */
+  .panel {
+    @apply bg-[#2a2a2a] p-6 rounded-xl shadow-xl border border-gray-800 w-full transition-colors;
+  }
+
+  /* Syöttökentät (Input, Select) */
+  .input {
+    @apply w-full p-3 rounded-lg bg-[#1a1a1a] border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:border-[#1cb1cf] focus:ring-1 focus:ring-[#1cb1cf] transition-all;
+  }
+
+  /* Painikkeet - Perustyyli */
+  .button {
+    @apply px-6 py-3 rounded-lg font-semibold text-white transition-all duration-200 transform active:scale-95 shadow-md flex items-center justify-center gap-2;
+    /* Oletusväri: Turkoosi */
+    @apply bg-[#1cb1cf] hover:bg-[#159eb9] hover:shadow-lg;
+  }
+
+  /* Painikkeet - Vaara / Peruuta / Poista */
+  .button--danger {
+    @apply bg-red-600 hover:bg-red-700 focus:ring-red-500;
+  }
+
+  /* Painikkeet - Toissijainen / Takaisin */
+  .button--secondary {
+    @apply bg-gray-600 hover:bg-gray-500 text-gray-200;
+  }
+}
+
+/* 5. MUKAUTETUT ANIMAATIOT (Käytetään esim. palautteissa) */
+
+/* Fade In */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Shake (Väärä vastaus) */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Bounce Short (Oikea vastaus) */
+@keyframes bounceShort {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-bounce-short {
+  animation: bounceShort 0.5s ease-in-out;
+}

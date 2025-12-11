@@ -2,193 +2,167 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+/**
+ * AdminLogs - Lokien katselunäkymä
+ * --------------------------------
+ * Hakee ja näyttää järjestelmän tekniset lokitiedot (virheet, kirjautumiset jne.).
+ * Vastaa määrittelydokumentin lukua 8.4.
+ */
 function AdminLogs() {
-  const [logs, setLogs] = useState([]);
-  const [levelFilter, setLevelFilter] = useState("all");
-  const [eventFilter, setEventFilter] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [logs, setLogs] = useState([]);
+  const [levelFilter, setLevelFilter] = useState("all");
+  const [eventFilter, setEventFilter] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const fetchLogs = async () => {
-    // HAETAAN TOKEN SESSION STORAGE -MUISTISTA
-    const token = sessionStorage.getItem("token"); // Käytetään sessionStoragea
+  // Hakee lokitietueet backendistä
+  const fetchLogs = async () => {
+    const token = sessionStorage.getItem("token");
 
-    if (!token) {
-        setError("Kirjautumista tarvitaan (Token puuttuu).");
-        setLoading(false);
-        return; 
-    }
+    if (!token) {
+      setError("Istunto vanhentunut. Kirjaudu uudelleen.");
+      setLoading(false);
+      return; 
+    }
 
-    try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/logs`, {
-            method: "GET",
-            // TÄRKEÄ MUUTOS: Lisätään token otsikkoon (Authorization Header)
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` // TÄMÄ AVAIN RATKAISEE VIAN
-            }
-        });
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/logs`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // Autentikointi
+        }
+      });
 
-        // Jos palvelin palauttaa virheen (esim. 403 Forbidden), käsitellään se
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || `HTTP-virhe: ${res.status}`);
-        }
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `HTTP-virhe: ${res.status}`);
+      }
 
-        const data = await res.json();
+      const data = await res.json();
+      
+      // Varmistetaan, että saatu data on taulukko ennen tilan päivitystä
+      const logsArray = Array.isArray(data.logs) ? data.logs : [];
+      setLogs(logsArray);
+      
+      setError("");
+      setLoading(false);
 
-        // TARKASTUS 1: Varmistetaan, että käytetään Backendin palauttamaa 'logs'-avainta
-        // Jos logs-avain puuttuu tai ei ole taulukko, logsArray on tyhjä taulukko.
-        const logsArray = Array.isArray(data.logs) ? data.logs : [];
+    } catch (err) {
+      setError(`Lokien haku epäonnistui: ${err.message}`); 
+      setLoading(false);
+    }
+  };
 
-        if (logsArray.length === 0 && data.total && data.total > 0) {
-            // Lokit pitäisi olla olemassa, mutta taulukko on tyhjä – tämä voi viitata Backend-suodatukseen
-            console.warn("Lokidata tyhjä tai odottamaton rakenne (oikea vastaus):", data);
-        }
+  // Ladataan lokit komponentin käynnistyessä
+  useEffect(() => {
+    fetchLogs();
+  }, []);
 
-        // Nyt asetetaan tilaan aina vain taulukko, mikä estää {username, role} -objektin pääsyn logs-tilaan.
-        setLogs(logsArray);
-        setError("");
-        setLoading(false);
+  // Suodatetaan lokit käyttäjän valintojen mukaan
+  const filtered = Array.isArray(logs)
+    ? logs.filter((log) => {
+        if (levelFilter !== "all" && log.level !== levelFilter) return false;
+        if (eventFilter && !log.event?.toLowerCase().includes(eventFilter.toLowerCase())) return false;
+        return true;
+      })
+    : [];
 
-    } catch (err) {
-        console.error("Virhe logien latauksessa:", err);
-        setError(`Virhe logien latauksessa: ${err.message}.`); 
-        setLoading(false);
-    }
-};
+  return (
+    <div className="panel max-w-4xl mx-auto mt-10 text-center">
+      <h2 className="title text-accent-turquoise mb-6">
+        Järjestelmän lokit
+      </h2>
 
-  useEffect(() => {
-    fetchLogs();
-    // TARKASTUS 2: Poistetaan setInterval väliaikaisesti
-    // Koska virhe voi syntyä, kun fetchLogs suoritetaan liian nopeasti uudelleen, 
-    // ennen kuin edellinen kierros on valmis.
-    // const interval = setInterval(fetchLogs, 5000); 
-    // return () => clearInterval(interval);
-  }, []);
+      {/* --- SUODATTIMET --- */}
+      <div className="flex flex-wrap justify-center gap-4 mb-6">
+        {/* Tasosuodatin (Info/Warn/Error) */}
+        <select
+          value={levelFilter}
+          onChange={(e) => setLevelFilter(e.target.value)}
+          className="input w-40"
+        >
+          <option value="all">Kaikki tasot</option>
+          <option value="info">Info</option>
+          <option value="warn">Varoitus</option>
+          <option value="error">Virhe</option>
+        </select>
 
-  // TARKASTUS 3: Lisätään varmistus, että 'logs' on taulukko ENNEN filteröintiä.
-  const filtered = Array.isArray(logs)
-    ? logs.filter((log) => {
-        if (levelFilter !== "all" && log.level !== levelFilter) return false;
-        if (eventFilter && !log.event?.toLowerCase().includes(eventFilter.toLowerCase())) return false;
-        return true;
-      })
-    : []; // Jos logs ei ole taulukko (mikä aiheuttaa virheen), käytetään tyhjää taulukkoa.
+        {/* Tapahtumasuodatin (Tekstihaku) */}
+        <input
+          type="text"
+          placeholder="Suodata tapahtuman mukaan..."
+          value={eventFilter}
+          onChange={(e) => setEventFilter(e.target.value)}
+          className="input w-60"
+        />
+      </div>
 
-  return (
-    <div className="panel" style={{ maxWidth: "900px", margin: "40px auto", textAlign: "center" }}>
-      <h2
-        className="title"
-        style={{ color: "var(--accent-turquoise)", marginBottom: "20px" }}
-      >
-        Järjestelmän lokit
-      </h2>
+      {/* --- PALUUPAINIKE --- */}
+      <div className="mb-8">
+        <button
+          className="button bg-accent-turquoise px-6 py-2"
+          onClick={() => navigate("/admin")}
+        >
+          ⬅ Paluu päävalikkoon
+        </button>
+      </div>
 
-      {/* Suodattimet (sama kuin ennen) */}
-      <div
-        style={{
-          marginBottom: "20px",
-          display: "flex",
-          gap: "10px",
-          justifyContent: "center",
-          flexWrap: "wrap",
-        }}
-      >
-        <select
-          value={levelFilter}
-          onChange={(e) => setLevelFilter(e.target.value)}
-          className="input"
-          style={{ width: "160px" }}
-        >
-          <option value="all">Kaikki tasot</option>
-          <option value="info">Info</option>
-          <option value="warn">Varoitus</option>
-          <option value="error">Virhe</option>
-        </select>
+      {/* --- VIRHEILMOITUS --- */}
+      {error && (
+        <p className="text-red-500 font-bold mb-4">
+          {error}
+        </p>
+      )}
 
-        <input
-          type="text"
-          placeholder="Suodata tapahtuman mukaan..."
-          value={eventFilter}
-          onChange={(e) => setEventFilter(e.target.value)}
-          className="input"
-          style={{ width: "240px" }}
-        />
-      </div>
-
-      {/* Paluu päävalikkoon (sama kuin ennen) */}
-      <div style={{ marginBottom: "25px" }}>
-        <button
-          className="button"
-          onClick={() => navigate("/admin")}
-          style={{ backgroundColor: "var(--accent-turquoise)", padding: "10px 20px" }}
-        >
-          ⬅ Paluu päävalikkoon
-        </button>
-      </div>
-
-      {error && (
-        <p style={{ textAlign: "center", color: "#FF4444", fontWeight: "600" }}>
-          {error}
-        </p>
-      )}
-
-      {loading ? (
-        <p style={{ textAlign: "center" }}>Ladataan lokitietoja...</p>
-      ) : filtered.length === 0 ? (
-        <p style={{ textAlign: "center" }}>Ei lokitietoja.</p>
-      ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            textAlign: "left",
-            color: "var(--text-primary)",
-          }}
-        >
-          <thead>
-            <tr style={{ borderBottom: "1px solid #444" }}>
-              <th style={{ padding: "10px" }}>Aika</th>
-              <th style={{ padding: "10px" }}>Taso</th>
-              <th style={{ padding: "10px" }}>Tapahtuma</th>
-              <th style={{ padding: "10px" }}>Viesti</th>
-              <th style={{ padding: "10px" }}>Käyttäjä / IP</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((log) => (
-              <tr key={log._id} style={{ borderBottom: "1px solid #333" }}>
-                <td style={{ padding: "8px", fontSize: "0.9em" }}>
-                  {new Date(log.createdAt || log.timestamp).toLocaleString()} 
-                </td>
-                <td
-                  style={{
-                    padding: "8px",
-                    color:
-                      log.level === "error"
-                        ? "#FF4444"
-                        : log.level === "warn"
-                        ? "#FFBB33"
-                        : "#00C851",
-                  }}
-                >
-                  {log.level?.toUpperCase()}
-                </td>
-                <td style={{ padding: "8px" }}>{log.event}</td>
-                <td style={{ padding: "8px" }}>{log.message || "-"}</td>
-                <td style={{ padding: "8px" }}>
-                  {log.user?.username || log.user || "-"} <br />
-                  <span style={{ color: "#888" }}>{log.ip}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
-  );
+      {/* --- LOKITAULUKKO --- */}
+      {loading ? (
+        <p>Ladataan lokitietoja...</p>
+      ) : filtered.length === 0 ? (
+        <p>Ei lokitietoja hakuehdoilla.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-gray-600">
+                <th className="p-3">Aika</th>
+                <th className="p-3">Taso</th>
+                <th className="p-3">Tapahtuma</th>
+                <th className="p-3">Viesti</th>
+                <th className="p-3">Käyttäjä / IP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((log) => (
+                <tr key={log._id} className="border-b border-gray-700 hover:bg-gray-800 transition-colors">
+                  <td className="p-3 text-sm text-gray-400">
+                    {new Date(log.createdAt || log.timestamp).toLocaleString()} 
+                  </td>
+                  
+                  {/* Värikoodattu taso */}
+                  <td className={`p-3 font-medium ${
+                    log.level === 'error' ? 'text-red-500' :
+                    log.level === 'warn' ? 'text-yellow-500' :
+                    'text-green-500'
+                  }`}>
+                    {log.level?.toUpperCase()}
+                  </td>
+                  
+                  <td className="p-3">{log.event}</td>
+                  <td className="p-3 text-gray-300">{log.message || "-"}</td>
+                  <td className="p-3 text-sm">
+                    <div className="font-semibold">{log.user?.username || log.user || "-"}</div>
+                    <div className="text-gray-500 text-xs">{log.ip}</div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default AdminLogs;

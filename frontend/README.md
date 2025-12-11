@@ -1,120 +1,122 @@
-🎨 Frontend – TSW Group Ajolupaharjoittelu
+# 🎨 Frontend – Ajoluvan harjoitusympäristö
 
-React (Vite) -pohjainen käyttöliittymä, joka on optimoitu toimimaan Vercel-alustalla. Sovellus sisältää "älykkään" latausmekanismin, joka käsittelee backendin (Render) kylmäkäynnistykset käyttäjäystävällisesti.
+Tämä on sovelluksen käyttöliittymä (Frontend), joka on toteutettu **React**:illa ja **Vite**:llä. Se on optimoitu toimimaan **Vercel**-alustalla ja kommunikoimaan Renderissä sijaitsevan backendin kanssa.
 
-🚀 Teknologia
+Sovellus on suunniteltu "Mobile First" -periaatteella ja se käyttää **Tailwind CSS**:ää visuaalisen ilmeen hallintaan.
 
-Osa
+## 🚀 Teknologiat
 
-Kuvaus
+| Teknologia | Tarkoitus |
+| :--- | :--- |
+| **React (Vite)** | Komponenttipohjainen UI-kirjasto ja nopea build-työkalu |
+| **Tailwind CSS** | Moderni utility-first tyylitys (korvaa erilliset CSS-tiedostot) |
+| **React Router** | SPA-reititys (Single Page Application) näkymien välillä |
+| **Session Storage** | JWT-tokenin ja istuntotietojen väliaikainen tallennus |
+| **Fetch API** | Natiivi tapa kommunikoida backendin REST API:n kanssa |
 
-React (Vite)
+---
 
-Nopea frontend-kehys ja build-työkalu
+## 🛌 Render & "Cold Start" -mekanismi
 
-Vercel
+Koska backend pyörii Renderin ilmaisversiolla, se "nukahtaa" 15 minuutin käyttämättömyyden jälkeen. Herääminen kestää n. 30–60 sekuntia. Frontend piilottaa tämän viiveen käyttäjältä älykkäällä latausprosessilla:
 
-Tuotantoympäristön hosting
+1.  **Vaihe 1: RouteAnimation (0-10s)**
+    * Kun käyttäjä saapuu sivulle, käynnistyy animaatio (taksi ajaa spiraalia).
+    * Taustalla frontend yrittää "herättää" backendin (`GET /`).
+    * Jos backend vastaa heti, animaatio keskeytyy ja sovellus aukeaa.
 
-TailwindCSS
+2.  **Vaihe 2: SplashScreen (10s -> )**
+    * Jos backend ei ehdi vastata animaation aikana, näytetään latausruutu ("Herätellään palvelinta...").
+    * Tämä komponentti jatkaa yhteyden yrittämistä (polling) kunnes backend vastaa.
 
-Responsiivinen tyylittely
+3.  **Istunto:**
+    * Tieto animaation katsomisesta tallennetaan `sessionStorage`:en, jotta käyttäjän ei tarvitse katsoa sitä joka kerta, kun hän päivittää sivun.
 
-React Router
+---
 
-Reititys näkymien välillä
+## 📂 Rakenne
 
-Fetch API
-
-Kommunikointi backendin kanssa
-
-Session Storage
-
-JWT-tokenin ja animaatiotilan tallennus
-
-📂 Rakenne ja uudet komponentit
-
+```text
 frontend/
+├── public/
+│   └── favicon.png          # Selaimen välilehden ikoni
 ├── src/
-│   ├── components/
-│   │   ├── RouteAnimation.jsx    # 🆕 Herättää backendin taustalla
-│   │   ├── SplashScreen.jsx      # 🆕 Pollaa backendia, jos herätys kestää
-│   │   ├── LoginView.jsx
-│   │   ├── ModeSelector.jsx
-│   │   ├── PracticeView.jsx
-│   │   ├── QuizView.jsx
-│   │   ├── AdminDashboard.jsx
-│   │   └── ... (Admin-hallintanäkymät)
-│   ├── utils/
-│   │   └── api.js                # API-kutsut (käyttää ympäristömuuttujia)
-│   └── main.jsx
-
-🛌 Backendin herätysmekanismi (Render Cold Start)
-
-Koska backend pyörii Renderin ilmaisversiolla, se "nukahtaa" käyttämättömyyden jälkeen. Herääminen kestää n. 30–60 sekuntia. Frontend hallitsee tätä seuraavasti:
-
-RouteAnimation: Sovelluksen käynnistyessä näytetään n. 10 sekunnin auto-animaatio. Samalla taustalla lähetetään "ping"-pyyntö backendille.
-
-SplashScreen: Jos backend ei ehdi vastata animaation aikana, siirrytään latausruutuun, joka yrittää yhteyttä toistuvasti (polling) kunnes backend vastaa (200 OK tai 404).
-
-Istunto: Tieto animaation katsomisesta tallennetaan sessionStorage:en, jotta sitä ei näytetä turhaan uudelleen saman istunnon aikana.
-
-⚙️ Asennus ja Ympäristömuuttujat
-
-Jotta frontend osaa keskustella backendin kanssa (joka on eri osoitteessa), on määriteltävä VITE_API_URL.
+│   ├── assets/              # Kuvat (Logo.png)
+│   ├── components/          # React-komponentit
+│   │   ├── RouteAnimation.jsx   # Herätysmekanismi A
+│   │   ├── SplashScreen.jsx     # Herätysmekanismi B
+│   │   ├── LoginView.jsx        # Kirjautuminen
+│   │   ├── ModeSelector.jsx     # Valikko (Harjoittelu/Tentti)
+│   │   ├── PracticeView.jsx     # Harjoittelutila (Välitön palaute)
+│   │   ├── QuizView.jsx         # Tenttitila (Aikaraja)
+│   │   ├── AdminDashboard.jsx   # Ylläpitäjän valikko
+│   │   └── ... (Muut Admin-näkymät: Users, Questions, Settings, Logs)
+│   ├── utils/               # Apufunktiot (api.js - varalla)
+│   ├── App.jsx              # Pääreititin
+│   ├── main.jsx             # Entry point
+│   └── index.css            # Tailwindin konfiguraatio ja globaalit tyylit
+├── index.html               # HTML-runko ja fontit
+├── package.json             # Riippuvuudet ja skriptit
+├── tailwind.config.js       # Teemavärit ja animaatiot
+└── vite.config.js           # Build-asetukset
+⚙️ Asennus ja konfigurointi
+Frontend tarvitsee tiedon siitä, missä backend sijaitsee. Tämä määritellään ympäristömuuttujissa.
 
 1. Asennus
+Lataa tarvittavat kirjastot (React, Tailwind, Router):
+
+Bash
 
 npm install
+2. Ympäristömuuttujat (.env)
+Luo frontend-kansion juureen tiedosto .env ja määritä backendin osoite.
 
+Paikallinen kehitys (Localhost):
 
-2. Konfiguraatio (.env)
+Koodinpätkä
 
-Luo juureen tiedosto .env:
-
-# Paikallinen kehitys:
 VITE_API_URL=http://localhost:3000/api
+Tuotanto (Vercel): Vercelin hallintapaneelissa (Project Settings -> Environment Variables) määritä:
 
-# TAI Tuotanto (Vercel Environment Variable):
-# VITE_API_URL=[https://sinun-backend-sovellus.onrender.com/api](https://sinun-backend-sovellus.onrender.com/api)
+Koodinpätkä
 
-
+VITE_API_URL=[https://sinun-backend-sovellus.onrender.com/api](https://sinun-backend-sovellus.onrender.com/api)
 3. Käynnistys
+Bash
 
+# Kehitystila (Hot Reload)
 npm run dev
 
+# Tuotantobuildin testaus
+npm run build
+npm run preview
+🔐 Tietoturva ja Autentikointi
+JWT: Kirjautumisen jälkeen backend palauttaa tokenin. Frontend tallentaa sen sessionStorage:en.
 
-🔄 API-yhteys
+Headerit: Suojatut API-kutsut (kuten admin-toiminnot) hakevat tokenin ja lisäävät sen pyynnön otsikoihin: Authorization: Bearer <token>.
 
-Kaikki API-kutsut on keskitetty tai käyttävät ympäristömuuttujaa.
-Esimerkki (src/utils/api.js):
+Roolit: Käyttöliittymä ohjaa käyttäjän oikeaan näkymään (/admin tai /mode) kirjautumisvastauksen role-tiedon perusteella.
 
-// Hakee osoitteen .env -tiedostosta, fallback localhostiin
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+🎨 Ulkoasu
+Fontit: 'Racing Sans One' (Otsikot) ja 'Barlow' (Leipäteksti) ladataan Google Fontsista index.html-tiedostossa.
 
-export const getHeaders = () => {
-  const token = sessionStorage.getItem("token");
-  return {
-    "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
-  };
-};
+Värit: Määritelty tailwind.config.js:ssä ja index.css:ssä:
+
+accent-turquoise (#1cb1cf)
+
+accent-orange (#ff6b35)
+
+background (#1a1a1a)
 
 
-🎨 Tyylit ja ulkoasu
+### 5. Tiivistelmä tiedoston toiminnasta
 
-TailwindCSS: Pääasiallinen tyylikirjasto.
+**Tiedosto:** `frontend/README.md`
 
-Animaatiot: RouteAnimation käyttää SVG-polkuja ja CSS-animaatioita (@keyframes). SplashScreen käyttää scoped CSS -tyylejä varmistaakseen toimivuuden latausvaiheessa.
+**Rooli kokonaisuudessa:**
+Tämä on frontendin käyttöohje.
 
-Responsiivisuus: Suunniteltu toimimaan mobiilissa ja työpöydällä.
-
-🔧 Kehitystilanne
-
-[x] Tuotantovalmis: Build-prosessi optimoitu Vercelille.
-
-[x] UX: Cold start -viive piilotettu animaatiolla.
-
-[x] Toimintatilat: Harjoittelu, Tentti ja Admin-hallinta toimivat.
-
-[ ] Testaus: E2E-testaus (esim. Cypress) tulossa myöhemmin.
+**Keskeiset tehtävät:**
+1.  **Tekninen dokumentaatio:** Selittää, miten Renderin "herätysmekanismi" on toteutettu kooditasolla.
+2.  **Kehittäjän opas:** Kertoo, miten `.env`-tiedosto pitää konfiguroida, jotta frontend löytää backendin (paikallisesti tai pilvessä).
+3.  **Yleiskuva:** Listaa sovelluksen rakenteen ja käytetyt teknologiat.

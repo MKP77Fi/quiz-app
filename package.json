@@ -1,9 +1,16 @@
 {
-  "dependencies": {
-    "body-parser": "^2.2.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "mongoose": "^8.19.1"
-  }
+  "name": "tsw-ajolupaharjoittelu-root",
+  "version": "1.0.0",
+  "description": "TSW Group Ajolupaharjoittelu - Monorepo root",
+  "private": true,
+  "scripts": {
+    "install-all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently \"npm run start --prefix backend\" \"npm run dev --prefix frontend\"",
+    "setup": "npm install && npm run install-all"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "author": "TSW Group",
+  "license": "ISC"
 }

@@ -1,42 +1,77 @@
-// middlewares/authMiddleware.js
+// backend/middlewares/authMiddleware.js
+
 const jwt = require("jsonwebtoken");
 
-// Käytetään ensisijaisesti .env-tiedoston avainta, muuten varmistusvarana sama avain kuin muualla
+// Käytetään samaa salaista avainta kuin kirjautumisessa (authController)
 const SECRET_KEY = process.env.JWT_SECRET || "salainen_avain";
 
 /**
- * Middleware-tokenin tarkistamiseen
- * Tarkistaa, onko Authorization-header mukana ja onko token kelvollinen.
- * Lisää req.user-olioon tokenista puretun käyttäjän tiedot (username, role).
+ * ------------------------------------------------------------------
+ * TOKENIN TARKISTUS (VERIFY TOKEN)
+ * ------------------------------------------------------------------
+ * Tämä middleware toimii "ovimiehenä". Se tarkistaa, onko käyttäjän
+ * lähettämässä pyynnössä mukana voimassa oleva digitaalinen avain (JWT).
+ * * Toimintaperiaate:
+ * 1. Etsii Authorization-otsikon (Header).
+ * 2. Erottaa sieltä tokenin (muodossa "Bearer <token>").
+ * 3. Varmistaa tokenin aitouden salaisella avaimella.
+ * 4. Jos ok, päästää käyttäjän eteenpäin (next()).
  */
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1]; // "Bearer <token>"
+  
+  // Token on yleensä muodossa "Bearer eyJhbGci...", joten pilkotaan se välilyönnistä
+  const token = authHeader && authHeader.split(" ")[1];
 
+  // Jos token puuttuu kokonaan, pääsy evätään heti
   if (!token) {
-    return res.status(403).json({ success: false, message: "Token puuttuu" });
+    // Emme lokita tätä aina "warn"-tasolla, koska se voi täyttää lokit turhaan (esim. bottien skannaukset),
+    // mutta sovelluksen debuggaukseen tieto on hyvä olla.
+    return res.status(403).json({ success: false, message: "Pääsy evätty: Tunniste puuttuu" });
   }
 
   try {
-    // Tarkistetaan ja puretaan token
+    // Tarkistetaan onko token aito ja voimassa (ei vanhentunut)
     const decoded = jwt.verify(token, SECRET_KEY);
-    req.user = decoded; // Esim. { username: "admin", role: "admin", iat: ..., exp: ... }
-    next();
+    
+    // Jos tarkistus onnistuu, tallennetaan käyttäjän tiedot (id, rooli) pyyntöön,
+    // jotta seuraavat funktiot tietävät, kuka käyttäjä on.
+    req.user = decoded; 
+    
+    next(); // Siirrytään seuraavaan vaiheeseen
   } catch (err) {
-    console.error("Virhe tokenin tarkistuksessa:", err.message);
-    return res.status(401).json({ success: false, message: "Virheellinen tai vanhentunut token" });
+    // Jos token on väärennetty tai vanhentunut
+    if (req.logEvent) {
+      await req.logEvent("warn", "auth.verify.fail", "Virheellinen token", { error: err.message, ip: req.ip });
+    }
+    return res.status(401).json({ success: false, message: "Istunto on vanhentunut tai virheellinen" });
   }
 };
 
 /**
- * Middleware vain admin-oikeuksia vaativille toiminnoille
- * Tarkistaa, että req.user on olemassa ja rooli on "admin".
+ * ------------------------------------------------------------------
+ * ADMIN-OIKEUKSIEN TARKISTUS (VERIFY ADMIN)
+ * ------------------------------------------------------------------
+ * Tämä middleware varmistaa, että käyttäjällä on "admin"-rooli.
+ * Tätä käytetään suojaamaan hallintatoimintoja (esim. kysymysten poisto).
+ * * HUOM: Tätä tulee käyttää AINA yhdessä verifyToken-middlewaren kanssa.
  */
-const verifyAdmin = (req, res, next) => {
+const verifyAdmin = async (req, res, next) => {
+  // Tarkistetaan, onko käyttäjätieto olemassa ja onko rooli oikea
   if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ success: false, message: "Ei oikeuksia tähän toimintoon" });
+    
+    // Lokitetaan luvaton yritys päästä admin-alueelle (tärkeä tietoturvatie)
+    if (req.logEvent) {
+      await req.logEvent("warn", "auth.admin.denied", "Luvaton pääsy admin-toimintoon", { 
+        user: req.user?.username || "Unknown",
+        role: req.user?.role 
+      });
+    }
+
+    return res.status(403).json({ success: false, message: "Ei käyttöoikeutta tähän toimintoon" });
   }
-  next();
+  
+  next(); // Käyttäjä on admin, matka jatkuu
 };
 
 module.exports = { verifyToken, verifyAdmin };

@@ -2,6 +2,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+/**
+ * AdminQuizSettings - Tentin asetusten hallinta
+ * --------------------------------------------
+ * Vastaa määrittelydokumentin lukua 5.3 ja 8.4.
+ * * Tässä näkymässä ylläpitäjä voi määrittää:
+ * 1. Kuinka monta kysymystä tentissä kysytään.
+ * 2. Kuinka kauan tentti saa kestää (sekunteina).
+ * * Asetukset ovat globaaleja ja vaikuttavat kaikkiin uusiin tentteihin.
+ */
 function AdminQuizSettings() {
   const [numQuestions, setNumQuestions] = useState(10);
   const [timeLimit, setTimeLimit] = useState(300);
@@ -9,9 +18,9 @@ function AdminQuizSettings() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const API_URL = import.meta.env.VITE_API_URL; // Vercel/Render production URL
+  const API_URL = import.meta.env.VITE_API_URL;
 
-  // Hae asetukset backendistä
+  // Haetaan nykyiset asetukset tietokannasta, kun sivu latautuu
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -25,19 +34,26 @@ function AdminQuizSettings() {
         if (!res.ok) throw new Error("Virhe asetuksia ladattaessa");
 
         const data = await res.json();
+        
+        // Päivitetään tila backendin arvoilla tai oletuksilla
         setNumQuestions(data.questionLimit ?? 10);
         setTimeLimit(data.timeLimit ?? 300);
       } catch (err) {
-        console.error("Virhe asetusten haussa:", err);
-        setError("Asetusten lataus epäonnistui.");
+        setError("Asetusten lataus epäonnistui. Tarkista verkkoyhteys.");
       }
     };
 
     fetchSettings();
   }, [API_URL]);
 
-  // Tallenna asetukset backendille
+  // Tallennetaan muutetut asetukset
   const handleSave = async () => {
+    // UI-tason validointi
+    if (numQuestions < 1 || timeLimit < 10) {
+      setError("Tarkista arvot: Kysymyksiä vähintään 1, aikaa vähintään 10s.");
+      return;
+    }
+
     try {
       const token = sessionStorage.getItem("token");
       const headers = {
@@ -57,88 +73,102 @@ function AdminQuizSettings() {
       if (!res.ok) throw new Error("Asetusten tallennus epäonnistui.");
 
       const updated = await res.json();
-      setNumQuestions(updated.questionLimit);
-      setTimeLimit(updated.timeLimit);
+      
+      // Varmistetaan, että UI näyttää tallennetut arvot
+      setNumQuestions(updated.data.questionLimit);
+      setTimeLimit(updated.data.timeLimit);
 
       setMessage("✅ Asetukset tallennettu onnistuneesti!");
       setError("");
+      
+      // Piilotetaan onnistumisviesti hetken kuluttua
       setTimeout(() => setMessage(""), 4000);
     } catch (err) {
-      console.error("Virhe tallennuksessa:", err);
-      setError("Tallennus epäonnistui. Tarkista palvelinyhteys.");
+      setError("Tallennus epäonnistui. Yritä myöhemmin uudelleen.");
       setMessage("");
     }
   };
 
-  const handleBack = () => navigate("/admin");
+  // Apufunktio: Näyttää sekunnit minuutteina (käyttäjäystävällisyys)
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    return `${mins} min ${seconds % 60} s`;
+  };
 
   return (
-    <div
-      className="panel"
-      style={{ maxWidth: "480px", marginTop: "40px", textAlign: "center" }}
-    >
-      <h2 className="title" style={{ color: "var(--accent-turquoise)" }}>
+    <div className="panel max-w-md mx-auto mt-10 text-center">
+      <h2 className="title text-accent-turquoise mb-6">
         Tenttiasetukset
       </h2>
 
+      {/* --- VIRHEILMOITUS --- */}
       {error && (
-        <p style={{ color: "#FF4444", fontWeight: "600", marginBottom: "15px" }}>
+        <p className="text-red-500 font-bold mb-4 bg-red-100 p-2 rounded">
           {error}
         </p>
       )}
 
-      <label style={{ display: "block", marginBottom: "8px" }}>
-        Kysymysten määrä tentissä:
-      </label>
-      <input
-        type="number"
-        value={numQuestions}
-        onChange={(e) => setNumQuestions(Number(e.target.value))}
-        min="1"
-        max="100"
-        className="input"
-        style={{ textAlign: "center" }}
-      />
+      {/* --- LOMAKE --- */}
+      <div className="flex flex-col gap-6 text-left">
+        
+        {/* Kysymysmäärä */}
+        <div>
+          <label className="block mb-2 font-semibold text-gray-700">
+            Kysymysten määrä tentissä:
+          </label>
+          <input
+            type="number"
+            value={numQuestions}
+            onChange={(e) => setNumQuestions(Number(e.target.value))}
+            min="1"
+            max="100"
+            className="input w-full text-center text-lg"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Määrittää, montako kysymystä arvotaan pankista yhteen tenttiin.
+          </p>
+        </div>
 
-      <label style={{ display: "block", marginTop: "20px", marginBottom: "8px" }}>
-        Aikaraja (sekunteina):
-      </label>
-      <input
-        type="number"
-        value={timeLimit}
-        onChange={(e) => setTimeLimit(Number(e.target.value))}
-        min="30"
-        className="input"
-        style={{ textAlign: "center" }}
-      />
+        {/* Aikaraja */}
+        <div>
+          <label className="block mb-2 font-semibold text-gray-700">
+            Aikaraja (sekunteina):
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={timeLimit}
+              onChange={(e) => setTimeLimit(Number(e.target.value))}
+              min="30"
+              className="input w-full text-center text-lg"
+            />
+          </div>
+          <p className="text-sm text-gray-600 mt-1 font-medium text-right">
+             = {formatTime(timeLimit)}
+          </p>
+        </div>
 
-      <div
-        className="button-group"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          marginTop: "20px",
-        }}
-      >
-        <button onClick={handleSave} className="button">
+      </div>
+
+      {/* --- TOIMINTOPAINIKKEET --- */}
+      <div className="flex flex-col gap-3 mt-8">
+        <button onClick={handleSave} className="button w-full">
           Tallenna asetukset
         </button>
-        <button onClick={handleBack} className="button button--secondary">
-          Paluu alkuvalikkoon
+        
+        <button 
+          onClick={() => navigate("/admin")} 
+          className="button bg-gray-500 hover:bg-gray-600 w-full"
+        >
+          Paluu päävalikkoon
         </button>
       </div>
 
+      {/* --- ONNISTUMISVIESTI --- */}
       {message && (
-        <p
-          style={{
-            color: "var(--accent-turquoise)",
-            marginTop: "15px",
-            fontWeight: "600",
-          }}
-        >
+        <div className="mt-4 p-3 bg-green-100 text-green-700 rounded font-bold animate-pulse">
           {message}
-        </p>
+        </div>
       )}
     </div>
   );

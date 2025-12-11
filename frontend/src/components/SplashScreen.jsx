@@ -1,53 +1,67 @@
-import { useState, useEffect } from 'react'
+// frontend/src/components/SplashScreen.jsx
+import { useState, useEffect } from 'react';
 
+/**
+ * SplashScreen - Latausruutu (Render Cold Start)
+ * ----------------------------------------------
+ * Tämä komponentti näkyy VAIN, jos backend on nukkumassa (Cold Start).
+ *
+ * Toiminta:
+ * 1. Näyttää "Ladataan..." -animaation.
+ * 2. Pingaa backendia taustalla (retry loop).
+ * 3. Kun backend vastaa (200 tai 404), päästää käyttäjän sisään (onReady).
+ *
+ * HUOMIO TYYLEISTÄ:
+ * Tämä komponentti käyttää "Scoped CSS" -ratkaisua (inline styles + !important),
+ * jotta se toimii täysin itsenäisesti riippumatta muun sovelluksen tai Tailwindin
+ * latautumistilasta. Tämä on tarkoituksellinen valinta vakauden takaamiseksi.
+ */
 function SplashScreen({ onReady }) {
-  const [status, setStatus] = useState('Käynnistetään sovellusta...')
-  const [progress, setProgress] = useState(0)
-  const [dots, setDots] = useState('.')
+  const [status, setStatus] = useState('Käynnistetään sovellusta...');
+  const [progress, setProgress] = useState(0);
+  const [dots, setDots] = useState('.');
 
   useEffect(() => {
     let isMounted = true;
     
     // 1. Animoi pisteet (...)
     const dotsInterval = setInterval(() => {
-      setDots(prev => prev.length >= 3 ? '.' : prev + '.')
-    }, 500)
+      setDots(prev => prev.length >= 3 ? '.' : prev + '.');
+    }, 500);
 
-    // 2. Animoi edistymispalkki (Fiksumpi logiikka)
-    // Menee hitaasti 90% asti, mutta odottaa siinä kunnes backend vastaa
+    // 2. Animoi edistymispalkki (Visuaalinen kikka)
+    // Etenee hitaasti 90% asti, mutta pysähtyy odottamaan palvelinta.
     const progressInterval = setInterval(() => {
       setProgress(prev => {
-        if (prev >= 90) return 90 // Jäädään odottamaan 90% kohdalle
-        // Hidastetaan vauhtia loppua kohden
-        const increment = prev < 50 ? 2 : 0.5 
-        return prev + increment
-      })
-    }, 100)
+        if (prev >= 90) return 90; // Jäädään odottamaan
+        const increment = prev < 50 ? 2 : 0.5; // Hidastuva vauhti
+        return prev + increment;
+      });
+    }, 100);
 
-    // 3. Wake up backend (Polling / Retry logic)
+    // 3. Herätä backend (Polling)
     const wakeUpBackend = async () => {
-      const apiUrl = import.meta.env.VITE_API_URL
+      const apiUrl = import.meta.env.VITE_API_URL;
       
-      // Jos URL puuttuu, ei voida tehdä mitään -> sisään vaan
       if (!apiUrl) {
-        setStatus('Ladataan sovellusta (Offline mode)')
-        setProgress(100)
-        setTimeout(() => isMounted && onReady(), 1000)
-        return
+        // Jos URL puuttuu (esim. dev-tilassa ilman .env), päästetään läpi
+        setStatus('Ladataan sovellusta...');
+        setProgress(100);
+        setTimeout(() => isMounted && onReady(), 1000);
+        return;
       }
 
-      const MAX_ATTEMPTS = 20; // Yritetään n. 40-50 sekuntia
-      const RETRY_DELAY = 2000; // 2 sekunnin välein
+      const MAX_ATTEMPTS = 20; // Max n. 40 sekuntia
+      const RETRY_DELAY = 2000;
 
       for (let i = 0; i < MAX_ATTEMPTS; i++) {
         if (!isMounted) return;
 
         try {
-          // Päivitetään statusta vain jos kestää pitkään (yli 2 yritystä)
-          if (i > 1) setStatus(`Herätellään palvelinta (yritys ${i + 1}/${MAX_ATTEMPTS})`)
+          if (i > 1) setStatus(`Herätellään palvelinta (yritys ${i + 1})...`);
 
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout per pyyntö
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
 
           const response = await fetch(`${apiUrl}/`, {
             method: 'GET',
@@ -61,302 +75,125 @@ function SplashScreen({ onReady }) {
             // ONNISTUI!
             setStatus('Yhteys muodostettu!');
             setProgress(100);
-            clearInterval(progressInterval); // Lopeta feikki-lataus
+            clearInterval(progressInterval);
             
-            // Pieni viive jotta käyttäjä näkee 100% ja viestin
             setTimeout(() => {
               if (isMounted) onReady();
             }, 800);
-            return; // Lopeta loop
+            return;
           }
         } catch (error) {
-          // Verkkovirhe tai timeout - jatketaan looppia
-          console.log(`Backend wake-up attempt ${i + 1} failed, retrying...`);
+          // Hiljainen virhe, yritetään uudelleen
         }
 
-        // Odota ennen seuraavaa yritystä
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
       }
 
-      // Jos loop loppui ilman onnistumista (Timeout)
+      // Jos kaikki yritykset epäonnistuivat (Timeout)
       if (isMounted) {
-        setStatus('Palvelin ei vastaa, yritetään avata sovellus...')
-        setProgress(100)
-        setTimeout(() => onReady(), 1500)
+        setStatus('Palvelin ei vastaa. Yritetään silti...');
+        setProgress(100);
+        setTimeout(() => onReady(), 1500);
       }
-    }
+    };
 
-    wakeUpBackend()
+    wakeUpBackend();
 
     return () => {
       isMounted = false;
-      clearInterval(dotsInterval)
-      clearInterval(progressInterval)
-    }
-  }, [onReady])
+      clearInterval(dotsInterval);
+      clearInterval(progressInterval);
+    };
+  }, [onReady]);
 
   return (
-    // SCOPED WRAPPER - jyrää yli kaikki globaalit tyylit
-    <div 
-      className="splash-screen-wrapper"
-      style={{
-        display: 'flex !important',
-        flexDirection: 'column !important',
-        alignItems: 'center !important',
-        justifyContent: 'center !important',
-        minHeight: '60vh !important',
-        padding: '48px 16px !important',
-        backgroundColor: 'var(--background, #f5f5f5) !important',
-        fontFamily: 'system-ui, -apple-system, sans-serif !important',
-        boxSizing: 'border-box !important'
-      }}
-    >
+    <div className="splash-screen-wrapper">
+      
       {/* Header */}
-      <div 
-        className="splash-header"
-        style={{
-          textAlign: 'center !important',
-          marginBottom: '32px !important',
-          animation: 'fadeInDown 0.8s ease-out !important',
-          display: 'block !important',
-          width: '100% !important',
-          maxWidth: '600px !important'
-        }}
-      >
-        <h1 
-          className="splash-title"
-          style={{
-            fontSize: '2.5rem !important',
-            fontWeight: 'bold !important',
-            marginBottom: '8px !important',
-            margin: '0 0 8px 0 !important',
-            background: 'linear-gradient(135deg, #ff6b35 0%, #1cb1cf 100%) !important',
-            WebkitBackgroundClip: 'text !important',
-            WebkitTextFillColor: 'transparent !important',
-            backgroundClip: 'text !important',
-            fontFamily: 'system-ui, -apple-system, sans-serif !important',
-            lineHeight: '1.2 !important',
-            padding: '0 !important'
-          }}
-        >
-          TSW Ajolupakoe
-        </h1>
-        <p 
-          className="splash-subtitle"
-          style={{
-            color: 'var(--text-primary, #333) !important',
-            fontSize: '1.125rem !important',
-            opacity: '0.8 !important',
-            margin: '0 !important',
-            fontWeight: 'normal !important'
-          }}
-        >
-          Harjoitussovellus
-        </p>
+      <div className="splash-header">
+        <h1 className="splash-title">TSW Ajolupakoe</h1>
+        <p className="splash-subtitle">Harjoitussovellus</p>
       </div>
 
-      {/* Spinner ja sisältö */}
-      <div 
-        className="splash-content"
-        style={{
-          display: 'flex !important',
-          flexDirection: 'column !important',
-          alignItems: 'center !important',
-          width: '100% !important',
-          maxWidth: '600px !important'
-        }}
-      >
-        {/* Animoitu ikoni / spinner */}
-        <div 
-          className="splash-spinner"
-          style={{
-            width: '80px !important',
-            height: '80px !important',
-            marginBottom: '32px !important',
-            position: 'relative !important',
-            display: 'block !important'
-          }}
-        >
-          <div 
-            className="splash-spinner-border"
-            style={{
-              width: '100% !important',
-              height: '100% !important',
-              border: '4px solid rgba(28, 177, 207, 0.2) !important',
-              borderTop: '4px solid #1cb1cf !important',
-              borderRadius: '50% !important',
-              animation: 'spin 1s linear infinite !important',
-              boxSizing: 'border-box !important'
-            }}
-          />
-          <div 
-            className="splash-spinner-emoji"
-            style={{
-              position: 'absolute !important',
-              top: '50% !important',
-              left: '50% !important',
-              transform: 'translate(-50%, -50%) !important',
-              fontSize: '2rem !important',
-              display: 'block !important',
-              margin: '0 !important',
-              padding: '0 !important'
-            }}
-          >
-            🚕
-          </div>
+      {/* Sisältö */}
+      <div className="splash-content">
+        
+        {/* Pyörivä taksi-ikoni */}
+        <div className="splash-spinner">
+          <div className="splash-spinner-border" />
+          <div className="splash-spinner-emoji">🚕</div>
         </div>
 
-        {/* Status-teksti */}
-        <div 
-          className="splash-status"
-          style={{
-            color: 'var(--text-primary, #333) !important',
-            fontSize: '1.125rem !important',
-            marginBottom: '16px !important',
-            minHeight: '30px !important',
-            textAlign: 'center !important',
-            display: 'block !important'
-          }}
-        >
+        {/* Status */}
+        <div className="splash-status">
           {status}{dots}
         </div>
 
-        {/* Edistymispalkki */}
-        <div 
-          className="splash-progress"
-          style={{
-            width: '100% !important',
-            maxWidth: '400px !important',
-            height: '4px !important',
-            backgroundColor: 'rgba(28, 177, 207, 0.2) !important',
-            borderRadius: '2px !important',
-            overflow: 'hidden !important',
-            marginBottom: '32px !important',
-            display: 'block !important'
-          }}
-        >
-          <div 
-            className="splash-progress-bar"
-            style={{
-              width: `${progress}% !important`,
-              height: '100% !important',
-              backgroundColor: '#1cb1cf !important',
-              transition: 'width 0.3s ease !important',
-              display: 'block !important'
-            }}
-          />
+        {/* Palkki */}
+        <div className="splash-progress">
+          <div className="splash-progress-bar" style={{ width: `${progress}%` }} />
         </div>
 
         {/* Vinkki */}
-        <p 
-          className="splash-tip"
-          style={{
-            marginTop: '32px !important',
-            color: 'var(--text-primary, #333) !important',
-            opacity: '0.6 !important',
-            fontSize: '0.875rem !important',
-            textAlign: 'center !important',
-            maxWidth: '400px !important',
-            padding: '0 16px !important',
-            marginBottom: '0 !important',
-            display: 'block !important',
-            fontWeight: 'normal !important',
-            lineHeight: '1.5 !important'
-          }}
-        >
-          💡 Vinkki: Jos lataus kestää, palvelin saattaa olla heräämässä unilta. Tämä voi viedä noin minuutin.
+        <p className="splash-tip">
+          💡 Vinkki: Jos lataus kestää, ilmaispalvelin on heräämässä unilta. 
+          Tämä voi viedä noin minuutin.
         </p>
       </div>
 
-      {/* SCOPED CSS animaatiot */}
+      {/* SCOPED CSS (Eristetyt tyylit)
+        Käytetään !important varmistamaan, ettei mikään ulkoinen tyyli riko tätä näkymää.
+      */}
       <style>{`
-        .splash-screen-wrapper * {
-          box-sizing: border-box !important;
-        }
-        
-        .splash-screen-wrapper .splash-spinner-border {
-          animation: splash-spin 1s linear infinite !important;
-        }
-        
-        .splash-screen-wrapper .splash-header {
-          animation: splash-fadeInDown 0.8s ease-out !important;
-        }
-        
-        @keyframes splash-spin {
-          0% { transform: rotate(0deg) !important; }
-          100% { transform: rotate(360deg) !important; }
-        }
-        
-        @keyframes splash-fadeInDown {
-          from {
-            opacity: 0 !important;
-            transform: translateY(-30px) !important;
-          }
-          to {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-          }
-        }
-        
         .splash-screen-wrapper {
-          all: unset !important;
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
           justify-content: center !important;
-          min-height: 60vh !important;
-          padding: 48px 16px !important;
-          background-color: var(--background, #f5f5f5) !important;
+          min-height: 100vh !important; /* Täyttää koko ruudun */
+          padding: 20px !important;
+          background-color: #f5f5f5 !important;
           font-family: system-ui, -apple-system, sans-serif !important;
+          color: #333 !important;
         }
-        
-        .splash-screen-wrapper * {
-          all: unset !important;
-          display: revert !important;
-          box-sizing: border-box !important;
-        }
-        
-        .splash-screen-wrapper .splash-header {
-          display: block !important;
+
+        .splash-header {
           text-align: center !important;
-          margin-bottom: 32px !important;
+          margin-bottom: 40px !important;
           animation: splash-fadeInDown 0.8s ease-out !important;
         }
-        
-        .splash-screen-wrapper .splash-title {
+
+        .splash-title {
           font-size: 2.5rem !important;
-          font-weight: bold !important;
-          margin: 0 0 8px 0 !important;
+          font-weight: 800 !important;
+          margin: 0 0 10px 0 !important;
           background: linear-gradient(135deg, #ff6b35 0%, #1cb1cf 100%) !important;
           -webkit-background-clip: text !important;
           -webkit-text-fill-color: transparent !important;
-          background-clip: text !important;
         }
-        
-        .splash-screen-wrapper .splash-subtitle {
-          color: var(--text-primary, #333) !important;
-          font-size: 1.125rem !important;
+
+        .splash-subtitle {
+          font-size: 1.2rem !important;
           opacity: 0.8 !important;
           margin: 0 !important;
         }
-        
-        .splash-screen-wrapper .splash-content {
+
+        .splash-content {
+          width: 100% !important;
+          max-width: 400px !important;
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          width: 100% !important;
-          max-width: 600px !important;
         }
-        
-        .splash-screen-wrapper .splash-spinner {
+
+        .splash-spinner {
           width: 80px !important;
           height: 80px !important;
-          margin-bottom: 32px !important;
+          margin-bottom: 30px !important;
           position: relative !important;
-          display: block !important;
         }
-        
-        .splash-screen-wrapper .splash-spinner-border {
+
+        .splash-spinner-border {
           width: 100% !important;
           height: 100% !important;
           border: 4px solid rgba(28, 177, 207, 0.2) !important;
@@ -364,57 +201,60 @@ function SplashScreen({ onReady }) {
           border-radius: 50% !important;
           animation: splash-spin 1s linear infinite !important;
         }
-        
-        .splash-screen-wrapper .splash-spinner-emoji {
+
+        .splash-spinner-emoji {
           position: absolute !important;
           top: 50% !important;
           left: 50% !important;
           transform: translate(-50%, -50%) !important;
           font-size: 2rem !important;
         }
-        
-        .splash-screen-wrapper .splash-status {
-          color: var(--text-primary, #333) !important;
-          font-size: 1.125rem !important;
-          margin-bottom: 16px !important;
-          min-height: 30px !important;
-          text-align: center !important;
-          display: block !important;
+
+        .splash-status {
+          font-size: 1.1rem !important;
+          margin-bottom: 15px !important;
+          min-height: 24px !important;
+          font-weight: 500 !important;
         }
-        
-        .splash-screen-wrapper .splash-progress {
+
+        .splash-progress {
           width: 100% !important;
-          max-width: 400px !important;
-          height: 4px !important;
-          background-color: rgba(28, 177, 207, 0.2) !important;
-          border-radius: 2px !important;
+          height: 6px !important;
+          background-color: rgba(0,0,0,0.1) !important;
+          border-radius: 3px !important;
           overflow: hidden !important;
-          margin-bottom: 32px !important;
-          display: block !important;
+          margin-bottom: 30px !important;
         }
-        
-        .splash-screen-wrapper .splash-progress-bar {
-          width: ${progress}% !important;
+
+        .splash-progress-bar {
           height: 100% !important;
           background-color: #1cb1cf !important;
           transition: width 0.3s ease !important;
-          display: block !important;
         }
-        
-        .splash-screen-wrapper .splash-tip {
-          margin-top: 32px !important;
-          color: var(--text-primary, #333) !important;
-          opacity: 0.6 !important;
-          font-size: 0.875rem !important;
+
+        .splash-tip {
+          font-size: 0.9rem !important;
+          color: #666 !important;
           text-align: center !important;
-          max-width: 400px !important;
-          padding: 0 16px !important;
-          margin-bottom: 0 !important;
-          display: block !important;
+          line-height: 1.5 !important;
+          background: #fff !important;
+          padding: 15px !important;
+          border-radius: 8px !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+        }
+
+        @keyframes splash-spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        @keyframes splash-fadeInDown {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
-  )
+  );
 }
 
-export default SplashScreen
+export default SplashScreen;

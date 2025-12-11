@@ -1,44 +1,32 @@
 // backend/routes/settings.js
+
 const express = require("express");
 const router = express.Router();
-const Settings = require("../models/Settings");
 
-// === Hae asetukset ===
-router.get("/", async (req, res) => {
-  try {
-    const settings = await Settings.findOne();
-    if (!settings) {
-      // Jos ei vielä asetuksia, luodaan oletusarvot
-      const defaultSettings = new Settings({ questionLimit: 10, timeLimit: 300 });
-      await defaultSettings.save();
-      return res.json(defaultSettings);
-    }
-    res.json(settings);
-  } catch (err) {
-    console.error("Virhe asetuksia haettaessa:", err);
-    res.status(500).json({ error: "Asetusten haku epäonnistui" });
-  }
-});
+// Tuodaan logiikka kontrollerista (MVC-arkkitehtuuri)
+// Tämä varmistaa, että "Singleton"-logiikka ja validointi tapahtuvat yhdessä paikassa
+const { getSettings, updateSettings } = require("../controllers/settingsController");
 
-// === Päivitä asetukset ===
-router.put("/", async (req, res) => {
-  try {
-    const { questionLimit, timeLimit } = req.body;
-    let settings = await Settings.findOne();
+// Tuodaan suojaus-middlewaret
+const { verifyToken, verifyAdmin } = require("../middlewares/authMiddleware");
 
-    if (!settings) {
-      settings = new Settings({ questionLimit, timeLimit });
-    } else {
-      settings.questionLimit = questionLimit ?? settings.questionLimit;
-      settings.timeLimit = timeLimit ?? settings.timeLimit;
-    }
+/**
+ * ------------------------------------------------------------------
+ * ASETUSTEN REITIT (SETTINGS ROUTES)
+ * ------------------------------------------------------------------
+ * Base URL: /api/settings
+ * Vastaa määrittelydokumentin lukua 11.4.
+ */
 
-    await settings.save();
-    res.json(settings);
-  } catch (err) {
-    console.error("Virhe asetuksia tallennettaessa:", err);
-    res.status(500).json({ error: "Asetusten tallennus epäonnistui" });
-  }
-});
+// GET /api/settings
+// Hakee tentin asetukset (kysymysmäärä ja aikaraja).
+// Tämä tarvitaan, kun käyttäjä (harjoittelija) aloittaa tentin.
+// Vaatii kirjautumisen, mutta ei admin-oikeuksia.
+router.get("/", verifyToken, getSettings);
+
+// PUT /api/settings
+// Päivittää tentin asetukset.
+// TÄRKEÄÄ: Tämä toiminto on rajattu vain ADMIN-käyttäjille (verifyAdmin).
+router.put("/", verifyToken, verifyAdmin, updateSettings);
 
 module.exports = router;

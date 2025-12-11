@@ -2,9 +2,19 @@
 const Log = require("../models/Log");
 
 /**
- * Hakee logit suodatettuna (vain admin)
- * Tukee query-parametreja:
- *  ?level=error&event=auth.login&user=admin&from=2025-11-01&to=2025-11-12&limit=50&skip=0
+ * ------------------------------------------------------------------
+ * HAE LOKIT (GET LOGS)
+ * ------------------------------------------------------------------
+ * Tämä funktio palvelee Admin-paneelin "Lokit"-näkymää.
+ * * Toiminnallisuus:
+ * - Hakee tekniset lokitietueet tietokannasta.
+ * - Mahdollistaa suodatuksen (esim. näytä vain virheet tai tietyn käyttäjän toimet).
+ * - Tukee sivutusta (limit/skip), jotta selain ei tukkeudu suuresta datamäärästä.
+ * * Parametrit (req.query):
+ * - level: Lokin taso (esim. "error", "warn", "info")
+ * - event: Tapahtuman nimi (esim. "auth.login")
+ * - user: Käyttäjätunnus
+ * - from / to: Aikavälihakua varten
  */
 exports.getLogs = async (req, res) => {
   try {
@@ -18,49 +28,59 @@ exports.getLogs = async (req, res) => {
       skip = 0,
     } = req.query;
 
+    // Rakennetaan hakuehdot dynaamisesti
     const filter = {};
 
     if (level) filter.level = level;
+    // RegExp mahdollistaa osittaiset osumat (case-insensitive)
     if (event) filter.event = new RegExp(event, "i");
-    if (user)
-      filter["user.username"] = new RegExp(user, "i");
+    if (user) filter["user.username"] = new RegExp(user, "i");
+    
+    // Aikavälin suodatus
     if (from || to) {
       filter.createdAt = {};
       if (from) filter.createdAt.$gte = new Date(from);
       if (to) filter.createdAt.$lte = new Date(to);
     }
 
+    // Haetaan lokit aikajärjestyksessä (uusin ensin)
     const logs = await Log.find(filter)
       .sort({ createdAt: -1 })
       .skip(Number(skip))
       .limit(Number(limit));
 
+    // Lasketaan yhteismäärä sivutusta varten
     const total = await Log.countDocuments(filter);
 
     res.json({ total, count: logs.length, logs });
   } catch (err) {
-    console.error("Virhe logien haussa:", err);
+    // Sisäinen virhe: ei paljasteta tarkkaa virhettä frontendille, mutta status 500 kertoo ongelmasta.
     res.status(500).json({ message: "Logien haku epäonnistui" });
   }
 };
 
 /**
- * Hakee yksittäisen lokin ID:n perusteella
+ * ------------------------------------------------------------------
+ * POIS KOMMENTOIDUT TOIMINNOT (MÄÄRITTELYN ULKOPUOLELLA)
+ * ------------------------------------------------------------------
+ * Seuraavat funktiot on poistettu käytöstä, koska Määrittelydokumentti (luku 11.4)
+ * listaa vain GET /api/logs -rajapinnan.
+ * * - Lokien luonti tapahtuu automaattisesti middlewaren kautta, ei julkisella API:lla.
+ * - Lokien poistaminen hoidetaan tietokannan automatiikalla (TTL-indeksi, luku 12.4),
+ * jotta audit-historia pysyy eheänä eikä sitä voi manipuloida manuaalisesti.
  */
+
+/*
 exports.getLogById = async (req, res) => {
   try {
     const log = await Log.findById(req.params.id);
     if (!log) return res.status(404).json({ message: "Lokia ei löydy" });
     res.json(log);
   } catch (err) {
-    console.error("Virhe logia haettaessa:", err);
     res.status(500).json({ message: "Virhe logia haettaessa" });
   }
 };
 
-/**
- * Luo uuden lokimerkinnän (valinnainen käyttö, esim. jos frontend haluaa lähettää tapahtumia)
- */
 exports.createLog = async (req, res) => {
   try {
     const newLog = new Log({
@@ -78,14 +98,10 @@ exports.createLog = async (req, res) => {
     const saved = await newLog.save();
     res.status(201).json(saved);
   } catch (err) {
-    console.error("Virhe logia luotaessa:", err);
     res.status(500).json({ message: "Logimerkinnän luonti epäonnistui" });
   }
 };
 
-/**
- * Poistaa logimerkinnän ID:n perusteella
- */
 exports.deleteLog = async (req, res) => {
   try {
     const deleted = await Log.findByIdAndDelete(req.params.id);
@@ -93,14 +109,10 @@ exports.deleteLog = async (req, res) => {
       return res.status(404).json({ message: "Lokia ei löytynyt" });
     res.json({ message: "Logi poistettu onnistuneesti" });
   } catch (err) {
-    console.error("Virhe logia poistettaessa:", err);
     res.status(500).json({ message: "Logia ei voitu poistaa" });
   }
 };
 
-/**
- * Poistaa vanhat logit annetun aikarajan perusteella (esim. olderThan=2025-11-01)
- */
 exports.deleteOldLogs = async (req, res) => {
   try {
     const { olderThan } = req.query;
@@ -111,7 +123,7 @@ exports.deleteOldLogs = async (req, res) => {
     const result = await Log.deleteMany({ createdAt: { $lt: date } });
     res.json({ message: `Poistettu ${result.deletedCount} vanhaa logia` });
   } catch (err) {
-    console.error("Virhe vanhojen logien poistossa:", err);
     res.status(500).json({ message: "Poisto epäonnistui" });
   }
 };
+*/

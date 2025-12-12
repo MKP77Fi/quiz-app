@@ -6,31 +6,23 @@ export default {
   ],
   theme: {
     extend: {
+      // Määritellään värit vanilla-CSS:si mukaan
       colors: {
-        'accent-turquoise': '#1cb1cf',
-        'accent-orange': '#ff6b35',
-        'surface': '#2a2a2a',
-        'background': '#1a1a1a',
+        background: '#1A1A1A',       // Tumma tausta
+        surface: '#1E1E1E',          // Paneelien tausta
+        primary: '#F2F2F2',          // Pääteksti
+        'accent-orange': '#FF5733',  // Tehosteväri 1
+        'accent-turquoise': '#1CB1CF', // Tehosteväri 2
+        'border-subtle': 'rgba(242, 242, 242, 0.1)', // Himmeät reunat
       },
-      animation: {
-        'fade-in': 'fadeIn 0.5s ease-out forwards',
-        'shake': 'shake 0.4s ease-in-out',
-        'bounce-short': 'bounceShort 0.5s ease-in-out',
+      // Määritellään fontit
+      fontFamily: {
+        sans: ['Barlow', 'sans-serif'],
+        display: ['"Racing Sans One"', 'cursive'],
       },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        shake: {
-          '0%, 100%': { transform: 'translateX(0)' },
-          '25%': { transform: 'translateX(-5px)' },
-          '75%': { transform: 'translateX(5px)' },
-        },
-        bounceShort: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
-        }
+      // Voidaan määritellä myös varjot
+      boxShadow: {
+        soft: '0 2px 8px rgba(0, 0, 0, 0.3)',
       }
     },
   },

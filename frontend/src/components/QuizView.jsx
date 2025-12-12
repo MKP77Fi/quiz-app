@@ -24,7 +24,7 @@ function QuizView() {
   const [error, setError] = useState("");
   
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
   // 1. ALUSTUS: Hae asetukset ja kysymykset
   useEffect(() => {
@@ -43,7 +43,6 @@ function QuizView() {
           : { questionLimit: 10, timeLimit: 300 };
 
         // B) Haetaan vain tarvittava määrä satunnaisia kysymyksiä
-        // Tämä on tietoturvallisempaa kuin hakea kaikki.
         const limit = settings.questionLimit || 10;
         const questionsRes = await fetch(`${API_URL}/questions/random?amount=${limit}`, { headers });
         
@@ -56,7 +55,7 @@ function QuizView() {
           throw new Error("Kysymyspankki on tyhjä.");
         }
 
-        // Sekoitetaan vaihtoehdot vielä frontendissä
+        // Sekoitetaan vaihtoehdot frontendissä
         const processed = questionsArray.map(q => ({
           ...q,
           options: [...q.options].sort(() => Math.random() - 0.5)
@@ -66,8 +65,7 @@ function QuizView() {
         setTimeLeft(settings.timeLimit || 300);
         setLoading(false);
 
-        // Kirjataan aloitus lokiin (Audit)
-        // Emme odota vastausta (fire-and-forget), jotta käyttäjä ei odota
+        // Kirjataan aloitus lokiin (fire-and-forget)
         fetch(`${API_URL}/quiz/start`, { method: "POST", headers }).catch(() => {});
 
       } catch (err) {
@@ -100,7 +98,7 @@ function QuizView() {
   const handleAnswer = (option) => {
     if (finished) return;
 
-    // Tarkistetaan vastaus (hiljaisesti, ei palautetta käyttäjälle)
+    // Tarkistetaan vastaus (hiljaisesti)
     if (option === questions[currentIndex].correctAnswer) {
       setScore((prev) => prev + 1);
     }
@@ -109,7 +107,7 @@ function QuizView() {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      finishQuiz(false); // Normaal lopetus
+      finishQuiz(false); // Normaali lopetus
     }
   };
 
@@ -117,7 +115,7 @@ function QuizView() {
   const finishQuiz = (timeout = false) => {
     setFinished(true);
     
-    // Lähetetään audit-loki backendille
+    // Audit-loki
     const token = sessionStorage.getItem("token");
     const endpoint = timeout ? "/quiz/timeout" : "/quiz/finish";
     
@@ -128,9 +126,7 @@ function QuizView() {
         ...(token && { "Authorization": `Bearer ${token}` })
       },
       body: JSON.stringify({
-        score: score, // Huom: React state ei välttämättä ole päivittynyt viimeisestä vastauksesta tässä scopeissa
-                      // Tentin logiikassa tässä voi olla pieni heitto viimeisen kysymyksen osalta, 
-                      // mutta audit-lokiin se riittää. Tarkempi logiikka vaatisi useRef:iä.
+        score: score,
         total: questions.length
       })
     }).catch(err => console.error("Audit-loki epäonnistui:", err));
@@ -143,42 +139,56 @@ function QuizView() {
     return `${m}:${s < 10 ? "0" + s : s}`;
   };
 
-  if (loading) return <div className="text-center mt-20 text-xl animate-pulse">Valmistellaan tenttiä...</div>;
+  if (loading) return (
+    <div className="flex justify-center items-center min-h-[50vh]">
+      <p className="text-xl animate-pulse text-accent-turquoise font-display">Valmistellaan tenttiä...</p>
+    </div>
+  );
+  
   if (error) return (
-    <div className="text-center mt-20">
-      <p className="text-red-500 font-bold mb-4">{error}</p>
-      <button onClick={() => navigate("/mode")} className="button">Paluu</button>
+    <div className="flex flex-col items-center mt-10 px-4">
+      <div className="panel text-center">
+        <p className="text-red-500 font-bold mb-6">{error}</p>
+        <button onClick={() => navigate("/mode")} className="btn-cancel">Paluu</button>
+      </div>
     </div>
   );
 
   const currentQ = questions[currentIndex];
 
   return (
-    <div className="flex flex-col items-center mt-8 w-full px-4">
-      <div className="panel w-full max-w-2xl text-center">
-        <h2 className="title text-accent-turquoise mb-6">Tenttitila</h2>
+    <div className="flex flex-col items-center min-h-[60vh] w-full px-4 py-8">
+      <div className="panel w-full max-w-2xl relative">
+        
+        {/* --- OTSIKKO --- */}
+        <h2 className="text-2xl font-display uppercase tracking-wider text-accent-turquoise text-center mb-6">
+          Tenttitila
+        </h2>
 
         {!finished ? (
           <>
-            {/* --- TILANNEPALE --- */}
-            <div className="flex justify-between items-center mb-6 font-semibold text-lg border-b border-gray-700 pb-4">
-              <span className="text-accent-turquoise">
+            {/* --- TILANNEPALKKI (Aika ja Numero) --- */}
+            <div className="flex justify-between items-center mb-8 border-b border-gray-700/50 pb-4 text-lg font-mono">
+              <span className="text-gray-400">
                 Kysymys {currentIndex + 1} / {questions.length}
               </span>
-              <span className={`${timeLeft < 60 ? "text-red-500 animate-pulse" : "text-accent-orange"}`}>
+              <span className={`font-bold ${timeLeft < 60 ? "text-red-500 animate-pulse" : "text-accent-orange"}`}>
                 ⏱ {formatTime(timeLeft)}
               </span>
             </div>
 
             {/* --- KYSYMYS --- */}
-            <h3 className="text-xl mb-6 text-left">{currentQ.questionText}</h3>
+            <h3 className="text-xl md:text-2xl font-medium mb-8 leading-relaxed text-center">
+              {currentQ.questionText}
+            </h3>
 
-            <div className="flex flex-col gap-3">
+            {/* --- VASTAUSVAIHTOEHDOT --- */}
+            <div className="flex flex-col gap-4">
               {currentQ.options.map((opt, i) => (
                 <button
                   key={i}
                   onClick={() => handleAnswer(opt)}
-                  className="p-4 bg-surface border border-gray-600 hover:bg-gray-700 rounded-lg text-left transition-colors"
+                  className="btn-answer text-left" // Käytetään uutta läpinäkyvää tyyliä
                 >
                   {opt}
                 </button>
@@ -186,10 +196,10 @@ function QuizView() {
             </div>
 
             {/* --- KESKEYTYS --- */}
-            <div className="mt-8 pt-4 border-t border-gray-800">
+            <div className="mt-10 pt-6 border-t border-gray-800/50 flex justify-center">
               <button 
                 onClick={() => navigate("/mode")} 
-                className="text-gray-500 hover:text-red-400 text-sm underline"
+                className="btn-cancel w-full sm:w-auto" // Oranssi keskeytyspainike
               >
                 Keskeytä tentti
               </button>
@@ -197,28 +207,34 @@ function QuizView() {
           </>
         ) : (
           /* --- TULOSNÄKYMÄ --- */
-          <div className="py-10 animate-fade-in">
-            <h3 className="text-2xl font-bold text-accent-turquoise mb-6">
+          <div className="py-6 animate-fade-in text-center">
+            <h3 className="text-3xl font-display text-accent-turquoise mb-8">
               Tentti suoritettu!
             </h3>
             
-            <div className="text-4xl font-bold text-white mb-2">
-              {score} / {questions.length}
+            {/* Pisteet isosti */}
+            <div className="bg-background/30 rounded-2xl p-6 mb-8 border border-white/10 inline-block min-w-[200px]">
+              <div className="text-5xl font-bold text-white mb-2 font-display">
+                {score} / {questions.length}
+              </div>
+              <p className="text-gray-400 uppercase tracking-widest text-sm">pistettä</p>
             </div>
-            <p className="text-gray-400 mb-8">pistettä</p>
 
+            {/* Aikailmoitus */}
             {timeLeft === 0 && (
-              <p className="text-red-500 font-bold mb-6 bg-red-100/10 p-2 rounded">
+              <div className="mb-8 p-3 bg-red-900/30 border border-red-500/50 text-red-200 rounded-lg inline-block">
                 ⏰ Aika loppui kesken!
-              </p>
+              </div>
             )}
 
-            <button 
-              onClick={() => navigate("/mode")} 
-              className="button bg-accent-turquoise px-8 py-3 text-lg"
-            >
-              Paluu alkuvalikkoon
-            </button>
+            <div>
+              <button 
+                onClick={() => navigate("/mode")} 
+                className="btn-action w-full sm:w-auto px-10"
+              >
+                Paluu alkuvalikkoon
+              </button>
+            </div>
           </div>
         )}
       </div>

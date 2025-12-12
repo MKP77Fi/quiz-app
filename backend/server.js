@@ -3,6 +3,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+// --- LISÄYS 1: Tuodaan loggerMiddleware ---
+const loggerMiddleware = require('./Middlewares/loggerMiddleware'); 
+// -----------------------------------------
+
 
 // Ladataan ympäristömuuttujat
 dotenv.config();
@@ -37,6 +41,11 @@ app.use(cors({
 
 // 2. JSON-parseri (TÄRKEÄ: Ilman tätä POST-pyynnöt eivät toimi!)
 app.use(express.json());
+
+// --- LISÄYS 2: Otetaan logger käyttöön ---
+// Tämän täytyy olla tässä, JSON-parserin jälkeen mutta ENNEN reittejä!
+app.use(loggerMiddleware);
+// -----------------------------------------
 
 // --- REITIT ---
 

@@ -31,7 +31,7 @@ function AdminLogs() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // Autentikointi
+          "Authorization": `Bearer ${token}`
         }
       });
 
@@ -41,8 +41,6 @@ function AdminLogs() {
       }
 
       const data = await res.json();
-      
-      // Varmistetaan, että saatu data on taulukko ennen tilan päivitystä
       const logsArray = Array.isArray(data.logs) ? data.logs : [];
       setLogs(logsArray);
       
@@ -55,12 +53,11 @@ function AdminLogs() {
     }
   };
 
-  // Ladataan lokit komponentin käynnistyessä
   useEffect(() => {
     fetchLogs();
   }, []);
 
-  // Suodatetaan lokit käyttäjän valintojen mukaan
+  // Suodatetaan lokit
   const filtered = Array.isArray(logs)
     ? logs.filter((log) => {
         if (levelFilter !== "all" && log.level !== levelFilter) return false;
@@ -70,90 +67,116 @@ function AdminLogs() {
     : [];
 
   return (
-    <div className="panel max-w-4xl mx-auto mt-10 text-center">
-      <h2 className="title text-accent-turquoise mb-6">
-        Järjestelmän lokit
-      </h2>
-
-      {/* --- SUODATTIMET --- */}
-      <div className="flex flex-wrap justify-center gap-4 mb-6">
-        {/* Tasosuodatin (Info/Warn/Error) */}
-        <select
-          value={levelFilter}
-          onChange={(e) => setLevelFilter(e.target.value)}
-          className="input w-40"
-        >
-          <option value="all">Kaikki tasot</option>
-          <option value="info">Info</option>
-          <option value="warn">Varoitus</option>
-          <option value="error">Virhe</option>
-        </select>
-
-        {/* Tapahtumasuodatin (Tekstihaku) */}
-        <input
-          type="text"
-          placeholder="Suodata tapahtuman mukaan..."
-          value={eventFilter}
-          onChange={(e) => setEventFilter(e.target.value)}
-          className="input w-60"
-        />
-      </div>
-
-      {/* --- PALUUPAINIKE --- */}
-      <div className="mb-8">
+    <div className="w-full max-w-6xl mx-auto py-8 px-4">
+      
+      {/* --- HEADER --- */}
+      <div className="flex flex-col items-center border-b border-gray-700/50 pb-6 mb-8 gap-6">
+        <h2 className="text-3xl font-display uppercase tracking-wider text-accent-orange text-center">
+          Järjestelmän lokit
+        </h2>
         <button
-          className="button bg-accent-turquoise px-6 py-2"
+          className="btn-cancel w-full sm:w-auto"
           onClick={() => navigate("/admin")}
         >
-          ⬅ Paluu päävalikkoon
+          ⬅ Paluu valikkoon
         </button>
+      </div>
+
+      {/* --- SUODATTIMET --- */}
+      <div className="bg-gray-900/40 p-6 rounded-xl border border-gray-700/50 mb-8 flex flex-col md:flex-row justify-center gap-4 shadow-sm">
+        
+        {/* Tasosuodatin */}
+        <div className="w-full md:w-48">
+          <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Taso</label>
+          <select
+            value={levelFilter}
+            onChange={(e) => setLevelFilter(e.target.value)}
+            className="input-field bg-gray-900 cursor-pointer text-sm"
+          >
+            <option value="all">Kaikki tasot</option>
+            <option value="info">Info</option>
+            <option value="warn">Varoitus</option>
+            <option value="error">Virhe</option>
+          </select>
+        </div>
+
+        {/* Tapahtumasuodatin */}
+        <div className="w-full md:w-64">
+          <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Haku</label>
+          <input
+            type="text"
+            placeholder="Etsi tapahtumaa..."
+            value={eventFilter}
+            onChange={(e) => setEventFilter(e.target.value)}
+            className="input-field bg-gray-900 text-sm"
+          />
+        </div>
       </div>
 
       {/* --- VIRHEILMOITUS --- */}
       {error && (
-        <p className="text-red-500 font-bold mb-4">
-          {error}
-        </p>
+        <div className="bg-red-900/30 border border-red-500/50 text-red-200 p-4 rounded-lg font-bold mb-6 text-center animate-pulse">
+          ⚠️ {error}
+        </div>
       )}
 
       {/* --- LOKITAULUKKO --- */}
       {loading ? (
-        <p>Ladataan lokitietoja...</p>
+        <div className="text-center py-10">
+          <p className="text-xl font-display text-accent-turquoise animate-pulse">
+            Ladataan lokitietoja...
+          </p>
+        </div>
       ) : filtered.length === 0 ? (
-        <p>Ei lokitietoja hakuehdoilla.</p>
+        <div className="text-center py-12 text-gray-500 bg-gray-900/20 rounded-xl border border-gray-800">
+          <p>Ei lokitietoja hakuehdoilla.</p>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto rounded-xl border border-gray-700/50 shadow-lg">
+          <table className="w-full text-left border-collapse bg-surface">
             <thead>
-              <tr className="border-b border-gray-600">
-                <th className="p-3">Aika</th>
-                <th className="p-3">Taso</th>
-                <th className="p-3">Tapahtuma</th>
-                <th className="p-3">Viesti</th>
-                <th className="p-3">Käyttäjä / IP</th>
+              <tr className="bg-gray-900 text-accent-turquoise border-b border-gray-600">
+                <th className="p-4 font-display uppercase tracking-wider text-sm">Aika</th>
+                <th className="p-4 font-display uppercase tracking-wider text-sm">Taso</th>
+                <th className="p-4 font-display uppercase tracking-wider text-sm">Tapahtuma</th>
+                <th className="p-4 font-display uppercase tracking-wider text-sm">Viesti</th>
+                <th className="p-4 font-display uppercase tracking-wider text-sm">Käyttäjä / IP</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="text-sm">
               {filtered.map((log) => (
-                <tr key={log._id} className="border-b border-gray-700 hover:bg-gray-800 transition-colors">
-                  <td className="p-3 text-sm text-gray-400">
+                <tr key={log._id} className="border-b border-gray-800 hover:bg-white/5 transition-colors">
+                  
+                  {/* Aika */}
+                  <td className="p-4 text-gray-400 font-mono text-xs whitespace-nowrap">
                     {new Date(log.createdAt || log.timestamp).toLocaleString()} 
                   </td>
                   
-                  {/* Värikoodattu taso */}
-                  <td className={`p-3 font-medium ${
-                    log.level === 'error' ? 'text-red-500' :
-                    log.level === 'warn' ? 'text-yellow-500' :
-                    'text-green-500'
-                  }`}>
-                    {log.level?.toUpperCase()}
+                  {/* Taso (Badge-tyyli) */}
+                  <td className="p-4">
+                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
+                      log.level === 'error' ? 'bg-red-900/20 border-red-500/50 text-red-400' :
+                      log.level === 'warn' ? 'bg-yellow-900/20 border-yellow-500/50 text-yellow-400' :
+                      'bg-blue-900/20 border-blue-500/50 text-blue-400'
+                    }`}>
+                      {log.level}
+                    </span>
                   </td>
                   
-                  <td className="p-3">{log.event}</td>
-                  <td className="p-3 text-gray-300">{log.message || "-"}</td>
-                  <td className="p-3 text-sm">
-                    <div className="font-semibold">{log.user?.username || log.user || "-"}</div>
-                    <div className="text-gray-500 text-xs">{log.ip}</div>
+                  {/* Tapahtuma */}
+                  <td className="p-4 font-medium text-white">{log.event}</td>
+                  
+                  {/* Viesti */}
+                  <td className="p-4 text-gray-300 max-w-xs truncate" title={log.message}>
+                    {log.message || "-"}
+                  </td>
+                  
+                  {/* Käyttäjä */}
+                  <td className="p-4">
+                    <div className="font-bold text-accent-turquoise">
+                      {log.user?.username || (typeof log.user === 'string' ? log.user : "-")}
+                    </div>
+                    <div className="text-gray-500 text-xs font-mono mt-0.5">{log.ip}</div>
                   </td>
                 </tr>
               ))}

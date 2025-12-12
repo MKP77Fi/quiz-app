@@ -1,54 +1,27 @@
-// frontend/src/components/Header.jsx
 import logo from "../assets/Logo.png";
 
 export default function Header() {
   return (
-    <header 
-      className="w-full bg-background border-b border-gray-800 shadow-sm"
-      style={{ 
-        backgroundColor: '#1a1a1a', 
-        borderBottom: '1px solid #333',
-        padding: '1rem 2rem'
-      }}
-    >
-      <div 
-        className="container mx-auto"
-        style={{
-          display: 'flex',            /* Pakottaa riviasettelun */
-          flexDirection: 'row',       /* Varmistaa että ovat vierekkäin */
-          justifyContent: 'space-between', /* Työntää reunat erilleen */
-          alignItems: 'center',       /* Keskittää pystysuunnassa */
-          width: '100%'
-        }}
-      >
+    // h-[90px]: Tarkka korkeus vanilla-css mukaan
+    // border-border-subtle: Himmeä reuna
+    <header className="w-full bg-background border-b border-border-subtle h-[90px] flex items-center shadow-sm">
+      <div className="container mx-auto px-6 md:px-10 flex flex-row justify-between items-center w-full">
         
-        {/* --- LOGO --- */}
-        <div style={{ flexShrink: 0 }}>
+        {/* LOGO */}
+        <div className="flex-shrink-0 flex items-center">
           <img
             src={logo}
             alt="TSW Group logo"
-            // Pakotetaan korkeus pikseleinä, jotta se ei voi räjähtää
-            style={{ 
-              height: '70px', 
-              width: 'auto', 
-              display: 'block' 
-            }} 
+            // object-contain ja max-h rajoittavat koon
+            className="h-16 md:h-20 w-auto object-contain" 
           />
         </div>
 
-        {/* --- LINKKI --- */}
-        <nav style={{ marginLeft: 'auto' }}>
+        {/* LINKKI */}
+        <nav className="ml-auto flex items-center">
           <a
             href="https://mp005840.nube.fi/tswgroup/"
-            style={{
-              color: '#ffffff',           /* Pakotettu valkoinen */
-              textDecoration: 'none',     /* Pakotettu ei-alleviivausta */
-              fontSize: '16px',
-              fontWeight: '500',
-              cursor: 'pointer'
-            }}
-            onMouseOver={(e) => e.target.style.color = '#1cb1cf'}
-            onMouseOut={(e) => e.target.style.color = '#ffffff'}
+            className="text-primary no-underline hover:text-accent-orange transition-colors duration-300 font-medium text-base md:text-lg whitespace-nowrap"
           >
             TSW Group -etusivulle &rarr;
           </a>

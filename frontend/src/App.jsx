@@ -1,21 +1,16 @@
-// frontend/src/App.jsx
 import { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
-
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-
 import LoginView from "./components/LoginView";
 import ModeSelector from "./components/ModeSelector";
 import PracticeView from "./components/PracticeView";
 import QuizView from "./components/QuizView";
-
 import AdminView from "./components/AdminView";
 import AdminDashboard from "./components/AdminDashboard";
 import UserManagementView from "./components/UserManagementView";
 import AdminQuizSettings from "./components/AdminQuizSettings";
 import AdminLogs from "./components/AdminLogs";
-
 import RouteAnimation from "./components/RouteAnimation";
 import SplashScreen from "./components/SplashScreen";
 
@@ -35,7 +30,7 @@ function App() {
   if (showAnimation) {
     return (
       <RouteAnimation onAnimationComplete={enterApplication}>
-        <div className="flex flex-col min-h-screen bg-background text-text-primary">
+        <div className="flex flex-col min-h-screen bg-background text-primary">
           <Header />
           <main className="flex-grow flex items-center justify-center p-4">
             <SplashScreen onReady={enterApplication} />
@@ -47,20 +42,23 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-text-primary font-sans">
+    // POISTETTU bg-red-900. Nyt käytetään bg-background (määritelty configissa).
+    <div className="flex flex-col min-h-screen bg-background text-primary font-sans">
+      
       <Header />
       
-      {/* py-12 = 3rem (48px) ylös ja alas -> Ilmavuutta
-         flex-grow = Työntää footerin alas
+      {/* py-12 = Ilmavuutta ylös ja alas (vastaa n. 48px)
+        gap-8 = Elementtien välinen tila
+        flex-grow = Työntää footerin alas
       */}
-      <main className="flex-grow container mx-auto px-4 py-12 flex flex-col items-center justify-start">
+      <main className="flex-grow container mx-auto px-4 py-12 flex flex-col items-center justify-start gap-8">
+        
         <div className="w-full max-w-4xl">
           <Routes>
             <Route path="/" element={<LoginView />} />
             <Route path="/mode" element={<ModeSelector />} />
             <Route path="/practice" element={<PracticeView />} />
             <Route path="/quiz" element={<QuizView />} />
-
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/questions" element={<AdminView />} />
             <Route path="/admin/users" element={<UserManagementView />} />

@@ -8,8 +8,8 @@ import { useNavigate } from "react-router-dom";
  * Ensimmäinen näkymä, jonka käyttäjä kohtaa (Luku 9.6).
  *
  * Toiminnallisuus:
- * 1. Ottaa vastaan tunnukset.
- * 2. Tekee POST-pyynnön backendille.
+ * 1. Ottaa vastaan tunnukset (käyttäjätunnus ja salasana).
+ * 2. Tekee POST-pyynnön backendille (/api/auth/login).
  * 3. Tallentaa JWT-tokenin istuntoon (sessionStorage).
  * 4. Ohjaa käyttäjän oikeaan näkymään roolin perusteella (Admin -> Dashboard, User -> ModeSelector).
  */
@@ -27,7 +27,10 @@ function LoginView() {
 
     try {
       // Lähetetään kirjautumispyyntö
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+      // Varmistetaan, että käytetään ympäristömuuttujaa tai oletusarvoa
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      
+      const response = await fetch(`${baseUrl}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -63,11 +66,14 @@ function LoginView() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] w-full px-4">
+      {/* Pääpaneeli: Käyttää index.css:n .panel -luokkaa */}
       <div className="panel w-full max-w-sm text-center">
         
-        <h1 className="title mb-6">Kirjaudu sisään</h1>
+        <h1 className="mb-8 text-3xl font-display uppercase tracking-wider">
+          Kirjaudu sisään
+        </h1>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <form onSubmit={handleLogin} className="flex flex-col gap-5">
           <div>
             <input
               type="text"
@@ -75,7 +81,7 @@ function LoginView() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              className="input w-full text-center"
+              className="input-field" /* Uusi tyyli: automaattinen keskitus ja glow */
               disabled={loading}
             />
           </div>
@@ -87,14 +93,14 @@ function LoginView() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="input w-full text-center"
+              className="input-field" /* Uusi tyyli */
               disabled={loading}
             />
           </div>
 
           <button 
             type="submit" 
-            className={`button w-full mt-4 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className="btn-action mt-4" /* Uusi tyyli: Turkoosi toimintopainike */
             disabled={loading}
           >
             {loading ? "Kirjaudutaan..." : "Kirjaudu"}
@@ -102,13 +108,13 @@ function LoginView() {
 
           {/* Virheilmoitus */}
           {error && (
-            <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm font-semibold animate-pulse">
+            <div className="mt-4 p-3 bg-red-900/20 border border-red-500/50 text-red-200 rounded-lg text-sm font-medium animate-pulse">
               {error}
             </div>
           )}
         </form>
         
-        <p className="mt-6 text-sm text-gray-500">
+        <p className="mt-8 text-sm text-gray-500/80">
           Käytä TSW Groupilta saamaasi tunnusta.
         </p>
       </div>

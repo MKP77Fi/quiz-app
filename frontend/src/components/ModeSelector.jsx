@@ -26,42 +26,53 @@ function ModeSelector() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 w-full">
+      {/* Käytetään samaa paneelityyliä kuin kirjautumisessa */}
       <div className="panel w-full max-w-lg text-center">
         
-        <h1 className="title mb-2">Tervetuloa harjoittelemaan</h1>
-        <p className="text-gray-500 mb-8">
+        {/* Otsikko samoilla tyyleillä kuin LoginView:ssä */}
+        <h1 className="mb-8 text-3xl font-display uppercase tracking-wider">
+          Tervetuloa
+        </h1>
+        
+        <p className="text-gray-500/80 mb-8 font-medium">
           Valitse, haluatko harjoitella vapaasti vai suorittaa kokeen.
         </p>
 
-        <div className="flex flex-col gap-4">
-          {/* --- HARJOITTELU-PAINIKE --- */}
-          <button 
-            onClick={goToPractice} 
-            className="group relative flex flex-col items-center justify-center p-6 bg-accent-turquoise hover:bg-opacity-90 text-white rounded-lg shadow-md transition-transform transform hover:scale-[1.02] active:scale-95"
-          >
-            <span className="text-2xl font-bold mb-1">Harjoittelu</span>
-            <span className="text-sm opacity-90 font-medium">
+        <div className="flex flex-col gap-8">
+          
+          {/* --- HARJOITTELU --- */}
+          <div>
+            <button 
+              onClick={goToPractice} 
+              className="btn-action" // Turkoosi toimintopainike
+            >
+              HARJOITTELU
+            </button>
+            <p className="mt-3 text-sm text-gray-500">
               Vapaa tahti • Välitön palaute • Ei aikarajaa
-            </span>
-          </button>
+            </p>
+          </div>
 
-          {/* --- TENTTI-PAINIKE --- */}
-          <button 
-            onClick={goToQuiz} 
-            className="group relative flex flex-col items-center justify-center p-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-transform transform hover:scale-[1.02] active:scale-95"
-          >
-            <span className="text-2xl font-bold mb-1">Tentti</span>
-            <span className="text-sm opacity-90 font-medium">
+          {/* --- TENTTI --- */}
+          <div>
+            <button 
+              onClick={goToQuiz} 
+              className="btn-action" // Turkoosi toimintopainike (identtinen ylläolevan kanssa)
+            >
+              TENTTI
+            </button>
+            <p className="mt-3 text-sm text-gray-500">
               Koetilanne • Aikaraja • Tulokset lopuksi
-            </span>
-          </button>
+            </p>
+          </div>
+
         </div>
 
         {/* --- ULOSKIRJAUTUMINEN --- */}
-        <div className="mt-10 pt-6 border-t border-gray-200">
+        <div className="mt-10 pt-6 border-t border-gray-200/50">
           <button
             onClick={handleLogout}
-            className="button button--danger w-full sm:w-auto px-8"
+            className="btn-cancel" // Oranssi keskeytyspainike
           >
             Kirjaudu ulos
           </button>

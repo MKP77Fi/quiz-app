@@ -42,16 +42,18 @@ function UserForm({ onSave, editingUser, cancelEdit }) {
   };
 
   return (
-    <div className="bg-surface border border-gray-700 p-6 rounded-lg shadow-lg mb-8">
-      <h3 className="text-xl font-bold text-accent-turquoise mb-6 border-b border-gray-700 pb-2">
+    <div className="bg-surface border border-gray-700/50 p-6 rounded-2xl shadow-lg mb-8 animate-fade-in">
+      
+      {/* --- OTSIKKO --- */}
+      <h3 className="text-xl font-display uppercase tracking-wider text-accent-turquoise mb-6 border-b border-gray-700/50 pb-2">
         {editingUser ? "Muokkaa käyttäjää" : "Lisää uusi käyttäjä"}
       </h3>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         
         {/* --- KÄYTTÄJÄTUNNUS --- */}
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-1">
+          <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">
             Käyttäjätunnus
           </label>
           <input
@@ -60,49 +62,54 @@ function UserForm({ onSave, editingUser, cancelEdit }) {
             onChange={(e) => setUsername(e.target.value)}
             required
             placeholder="esim. Kurssi_Kevat_2024"
-            className="input w-full"
+            className="input-field"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 mt-2 italic">
             Käytä geneeristä tunnusta, ei henkilön nimeä (GDPR).
           </p>
         </div>
 
-        {/* --- SALASANA --- */}
-        <div>
-          <label className="block text-sm font-medium text-gray-400 mb-1">
-            Salasana {editingUser ? <span className="text-xs font-normal text-gray-500">(täytä vain jos haluat vaihtaa)</span> : ""}
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={editingUser ? "Jätä tyhjäksi, jos ei vaihdu" : "Syötä vahva salasana"}
-            // Uutta käyttäjää luodessa salasana on pakollinen
-            {...(editingUser ? {} : { required: true })}
-            className="input w-full"
-          />
-        </div>
+        {/* --- SALASANA JA ROOLI (Rinnakkain) --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Salasana */}
+          <div>
+            <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">
+              Salasana {editingUser && <span className="text-[10px] font-normal text-gray-500 lowercase">(täytä vain jos vaihdat)</span>}
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={editingUser ? "Jätä tyhjäksi, jos ei vaihdu" : "Syötä vahva salasana"}
+              // Uutta käyttäjää luodessa salasana on pakollinen
+              {...(editingUser ? {} : { required: true })}
+              className="input-field"
+            />
+          </div>
 
-        {/* --- ROOLI --- */}
-        <div>
-          <label className="block text-sm font-medium text-gray-400 mb-1">
-            Rooli
-          </label>
-          <select 
-            value={role} 
-            onChange={(e) => setRole(e.target.value)} 
-            className="input w-full bg-gray-900"
-          >
-            <option value="user">Harjoittelija (Vain tentti/harjoittelu)</option>
-            <option value="admin">Admin (Täydet oikeudet)</option>
-          </select>
+          {/* Rooli */}
+          <div>
+            <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">
+              Rooli
+            </label>
+            <select 
+              value={role} 
+              onChange={(e) => setRole(e.target.value)} 
+              className="input-field bg-gray-900 cursor-pointer"
+            >
+              <option value="user">Harjoittelija (Vain tentti/harjoittelu)</option>
+              <option value="admin">Admin (Täydet oikeudet)</option>
+            </select>
+          </div>
+
         </div>
 
         {/* --- PAINIKKEET --- */}
-        <div className="flex gap-3 mt-4">
+        <div className="flex flex-col sm:flex-row gap-4 mt-2">
           <button 
             type="submit" 
-            className="button flex-1 bg-green-600 hover:bg-green-500"
+            className="btn-action flex-1"
           >
             {editingUser ? "💾 Tallenna muutokset" : "➕ Lisää käyttäjä"}
           </button>
@@ -111,7 +118,7 @@ function UserForm({ onSave, editingUser, cancelEdit }) {
             <button 
               type="button" 
               onClick={cancelEdit} 
-              className="button button--danger flex-none px-6"
+              className="btn-cancel sm:w-auto"
             >
               Peruuta
             </button>

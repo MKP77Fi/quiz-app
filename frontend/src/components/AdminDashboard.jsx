@@ -23,46 +23,56 @@ function AdminDashboard() {
 
   // --- Uloskirjautuminen ---
   // Tyhjentää istunnon (JWT-tokenin) ja ohjaa aloitussivulle.
-  // (Määrittely 4.3: Istunto päätetään client-side poistamalla token)
   const logout = () => {
     sessionStorage.clear();
     navigate("/");
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="panel flex flex-col items-center text-center p-6 bg-white rounded shadow-sm">
-        <h1 className="text-2xl font-bold mb-2">Admin-valikko</h1>
-        <p className="text-gray-600 mb-6">Valitse hallinnoitava osio:</p>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] w-full px-4">
+      {/* Käytetään yhtenäistä .panel -luokkaa */}
+      <div className="panel w-full max-w-md text-center">
+        
+        {/* KORJATTU: Otsikon väri vaihdettu oranssiksi (text-accent-orange) */}
+        <h1 className="mb-8 text-3xl font-display uppercase tracking-wider text-accent-orange">
+          Admin-valikko
+        </h1>
+        
+        <p className="text-gray-500/80 mb-8 font-medium">
+          Valitse hallinnoitava osio:
+        </p>
 
-        <div className="flex flex-col gap-3 w-full max-w-xs">
-          {/* Hallintapainikkeet */}
-          <button className="button w-full" onClick={goQuestions}>
-            Hallinnoi kysymyksiä
+        {/* Hallintapainikkeet - Käytetään .btn-action (Turkoosi) */}
+        <div className="flex flex-col gap-4 w-full">
+          
+          <button className="btn-action" onClick={goQuestions}>
+            HALLINNOI KYSYMYKSIÄ
           </button>
           
-          <button className="button w-full" onClick={goUsers}>
-            Hallinnoi käyttäjiä
+          <button className="btn-action" onClick={goUsers}>
+            HALLINNOI KÄYTTÄJIÄ
           </button>
           
-          <button className="button w-full" onClick={goQuizSettings}>
-            Hallinnoi tenttiä
+          <button className="btn-action" onClick={goQuizSettings}>
+            TENTIN ASETUKSET
           </button>
           
-          <button className="button w-full" onClick={goLogs}>
-            Näytä lokit
+          <button className="btn-action" onClick={goLogs}>
+            JÄRJESTELMÄN LOKIT
           </button>
 
-          {/* Erotin ja uloskirjautuminen */}
-          <div className="mt-4 pt-4 border-t border-gray-200 w-full">
-            <button
-              className="button button--danger w-full"
-              onClick={logout}
-            >
-              Kirjaudu ulos
-            </button>
-          </div>
         </div>
+
+        {/* Erotin ja uloskirjautuminen */}
+        <div className="mt-10 pt-6 border-t border-gray-700/50 w-full">
+          <button
+            className="btn-cancel" /* Käytetään .btn-cancel (Oranssi) */
+            onClick={logout}
+          >
+            Kirjaudu ulos
+          </button>
+        </div>
+
       </div>
     </div>
   );

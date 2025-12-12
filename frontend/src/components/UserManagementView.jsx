@@ -24,7 +24,7 @@ function UserManagementView() {
   const [loading, setLoading] = useState(true);
   
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
   // Apufunktio: Autentikointiheaderit
   const getAuthHeaders = () => {
@@ -121,31 +121,33 @@ function UserManagementView() {
   };
 
   return (
-    <div className="panel max-w-4xl mx-auto mt-6">
-      <div className="flex flex-col gap-4">
+    <div className="w-full max-w-5xl mx-auto py-8 px-4">
+      <div className="flex flex-col gap-6">
         
-        {/* Otsikko ja paluupainike */}
-        <div className="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
-          <h1 className="text-2xl font-bold text-accent-turquoise">
+        {/* --- HEADER --- */}
+        <div className="flex flex-col items-center border-b border-gray-700/50 pb-6 mb-2 gap-6">
+          
+          <h1 className="text-3xl font-display uppercase tracking-wider text-accent-orange text-center">
             Käyttäjähallinta
           </h1>
+          
           <button 
-            className="button bg-gray-600 hover:bg-gray-500 text-sm px-4 py-2" 
+            className="btn-cancel w-full sm:w-auto" 
             onClick={() => navigate("/admin")}
           >
             ⬅ Paluu valikkoon
           </button>
         </div>
 
-        {/* Virheilmoitus */}
+        {/* --- VIRHEILMOITUS --- */}
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded font-bold mb-4">
-            {error}
+          <div className="bg-red-900/30 border border-red-500/50 text-red-200 p-4 rounded-lg font-bold animate-pulse text-center">
+            ⚠️ {error}
           </div>
         )}
 
-        {/* Lomake */}
-        <div className="mb-8">
+        {/* --- LOMAKE --- */}
+        <div>
           <UserForm
             onSave={handleSave}
             editingUser={editingUser}
@@ -153,14 +155,14 @@ function UserManagementView() {
           />
         </div>
 
-        {/* Lista */}
+        {/* --- LISTA --- */}
         <div>
-          <h2 className="text-xl font-semibold mb-3 text-white">
-            Käyttäjät ({users.length} kpl)
-          </h2>
-          
           {loading ? (
-            <p className="text-center text-gray-400">Ladataan käyttäjiä...</p>
+            <div className="text-center py-10">
+              <p className="text-xl font-display text-accent-turquoise animate-pulse">
+                Ladataan käyttäjiä...
+              </p>
+            </div>
           ) : (
             <UserList 
               users={users} 

@@ -6,10 +6,10 @@ import { useState, useEffect } from "react";
  * ---------------------------------------------------
  * Vastaa määrittelydokumentin lukua 5.3 (Kysymysten hallinta).
  *
- * Parannukset alkuperäiseen:
+ * Parannukset:
  * 1. "Oikea vastaus" valitaan listasta (estää kirjoitusvirheet).
- * 2. Lisätty "Pisteet"-kenttä (vastaa backendin mallia).
- * 3. Moderni Tailwind-ulkoasu.
+ * 2. Lisätty "Pisteet"-kenttä.
+ * 3. Moderni Tailwind-ulkoasu (input-field, btn-action).
  */
 function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
   const [questionText, setQuestionText] = useState("");
@@ -70,17 +70,19 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
   };
 
   return (
-    <div className="bg-surface border border-gray-700 p-6 rounded-lg shadow-lg mb-8">
-      <h3 className="text-xl font-bold text-accent-turquoise mb-6 border-b border-gray-700 pb-2">
+    <div className="bg-surface border border-gray-700/50 p-6 rounded-2xl shadow-lg mb-8 animate-fade-in">
+      
+      {/* --- OTSIKKO --- */}
+      <h3 className="text-xl font-display uppercase tracking-wider text-accent-turquoise mb-6 border-b border-gray-700/50 pb-2">
         {editingQuestion ? "Muokkaa kysymystä" : "Lisää uusi kysymys"}
       </h3>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         
         {/* --- KYSYMYSTEKSTI --- */}
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-1">
-            Kysymysteksti:
+          <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">
+            Kysymysteksti
           </label>
           <input
             type="text"
@@ -88,16 +90,16 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
             onChange={(e) => setQuestionText(e.target.value)}
             required
             placeholder="Kirjoita kysymys tähän..."
-            className="input w-full"
+            className="input-field text-left" // Varmistetaan vasen tasaus pitkälle tekstille
           />
         </div>
 
         {/* --- VAIHTOEHDOT --- */}
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">
-            Vastausvaihtoehdot:
+          <label className="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">
+            Vastausvaihtoehdot
           </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {options.map((opt, i) => (
               <input
                 key={i}
@@ -106,25 +108,25 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
                 onChange={(e) => handleOptionChange(e.target.value, i)}
                 placeholder={`Vaihtoehto ${i + 1}`}
                 required
-                className="input w-full"
+                className="input-field"
               />
             ))}
           </div>
         </div>
 
-        {/* --- OIKEA VASTAUS & ASETUKSET --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-800/50 p-4 rounded">
+        {/* --- ASETUKSET (Tummempi laatikko) --- */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-900/40 p-5 rounded-xl border border-white/5">
           
           {/* Oikea vastaus (Dropdown) */}
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
-              Oikea vastaus:
+            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+              Oikea vastaus
             </label>
             <select
               value={correctAnswer}
               onChange={(e) => setCorrectAnswer(e.target.value)}
               required
-              className="input w-full bg-gray-900"
+              className="input-field bg-gray-900 cursor-pointer"
             >
               <option value="" disabled>Valitse oikea...</option>
               {options.map((opt, i) => (
@@ -136,13 +138,13 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
 
           {/* Vaikeustaso */}
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
-              Vaikeustaso:
+            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+              Vaikeustaso
             </label>
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
-              className="input w-full bg-gray-900"
+              className="input-field bg-gray-900 cursor-pointer"
             >
               <option value="easy">Helppo</option>
               <option value="medium">Keskitaso</option>
@@ -152,8 +154,8 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
 
           {/* Pisteet */}
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">
-              Pisteet:
+            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+              Pisteet
             </label>
             <input
               type="number"
@@ -161,16 +163,16 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
               max="10"
               value={points}
               onChange={(e) => setPoints(e.target.value)}
-              className="input w-full bg-gray-900"
+              className="input-field bg-gray-900"
             />
           </div>
         </div>
 
         {/* --- PAINIKKEET --- */}
-        <div className="flex gap-3 mt-2">
+        <div className="flex flex-col sm:flex-row gap-4 mt-2">
           <button 
             type="submit" 
-            className="button flex-1 bg-green-600 hover:bg-green-500"
+            className="btn-action flex-1"
           >
             {editingQuestion ? "💾 Tallenna muutokset" : "➕ Lisää kysymys"}
           </button>
@@ -179,7 +181,7 @@ function QuestionForm({ onSave, editingQuestion, cancelEdit }) {
             <button 
               type="button" 
               onClick={cancelEdit} 
-              className="button button--danger flex-none px-6"
+              className="btn-cancel sm:w-auto"
             >
               Peruuta
             </button>

@@ -1,290 +1,79 @@
-/* ==========================================================
-   PERUSASETUKSET JA MUUTTUJAT
-   ========================================================== */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+/* frontend/src/index.css */
+
+/* 1. Fontit */
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Racing+Sans+One&display=swap');
+
+/* 2. Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 3. Perusasetukset */
+@layer base {
+  body {
+    @apply bg-background text-primary font-sans min-h-screen;
+  }
+  h1, h2, h3 {
+    @apply font-display text-accent-orange mt-0;
+  }
 }
 
-:root {
-  --background: #1A1A1A;
-  --surface: #1E1E1E;
-  --text-primary: #F2F2F2;
-  --text-light: #FFFFFF;
-  --accent-orange: #FF5733;
-  --accent-turquoise: #1CB1CF;
-  --border-subtle: rgba(242, 242, 242, 0.1);
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
+/* 4. Komponenttityylit */
+@layer components {
 
-/* ==========================================================
-   YLEINEN TYYLI
-   ========================================================== */
-body {
-  background-color: var(--background);
-  color: var(--text-primary);
-  font-family: 'Barlow', sans-serif;
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-}
-
-body, button, input, select, textarea, a, p, span {
-  font-family: 'Barlow', sans-serif !important;
-}
-
-/* ==========================================================
-   TYPOGRAFIA
-   ========================================================== */
-h1, h2, h3 {
-  font-family: 'Racing Sans One', cursive;
-  color: var(--accent-orange);
-  margin-top: 0;
-}
-
-/* ==========================================================
-   HEADER
-   ========================================================== */
-.header {
-  background-color: var(--background);
-  border-bottom: 1px solid var(--border-subtle);
-  height: 90px;
-  display: flex;
-  align-items: center;
-}
-
-.header-container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 40px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-}
-
-.header-logo {
-  height: 100px;
-  width: auto;
-  object-fit: contain;
-}
-
-.header-nav {
-  display: flex;
-  align-items: center;
-}
-
-.header-link {
-  color: var(--text-primary);
-  text-decoration: none;
-  font-size: 1rem;
-  transition: color 0.3s ease;
-}
-
-.header-link:hover {
-  color: var(--accent-orange);
-}
-
-/* ==========================================================
-   FOOTER
-   ========================================================== */
-.footer {
-  background-color: var(--background);
-  border-top: 1px solid var(--border-subtle);
-  text-align: center;
-  padding: 16px 0;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
-  margin-top: auto;
-}
-
-/* ==========================================================
-   YLEISET UI-KOMPONENTIT
-   ========================================================== */
-
-/* --- Paneelit / laatikot --- */
-.panel {
-  background-color: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  box-shadow: var(--shadow-soft);
-  padding: 40px 30px;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-/* --- Otsikot --- */
-.title {
-  font-family: "Racing Sans One", cursive;
-  font-size: 2.2rem;
-  color: var(--accent-orange);
-  margin-bottom: 40px;
-  letter-spacing: 1px;
-  text-shadow: 0 0 10px rgba(255, 87, 51, 0.3);
-  text-align: center;
-}
-
-/* --- Lomakekentät --- */
-.input {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(242, 242, 242, 0.2);
-  background-color: transparent;
-  color: var(--accent-turquoise);
-  font-size: 1rem;
-  outline: none;
-  transition: all 0.3s ease;
-  margin-bottom: 1rem;
-}
-
-.input::placeholder {
-  color: rgba(200, 200, 200, 0.4);
-}
-
-.input:focus {
-  border-color: var(--accent-turquoise);
-  box-shadow: 0 0 8px rgba(28, 177, 207, 0.4);
-}
-
-/* --- Painikkeet --- */
-.button {
-  background-color: var(--accent-orange);
-  color: var(--text-light);
-  border: none;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: 100%;
-}
-
-.button:hover {
-  background-color: var(--accent-turquoise);
-  transform: scale(1.03);
-  box-shadow: 0 0 10px rgba(28, 177, 207, 0.4);
-}
-
-/* --- Vaarapainikkeet (esim. "Kirjaudu ulos") --- */
-.button--danger {
-  background-color: #d9534f;
-}
-
-.button--danger:hover {
-  background-color: #b23b38;
-  box-shadow: 0 0 10px rgba(217, 83, 79, 0.4);
-}
-
-/* --- Painikkeiden ryhmittely --- */
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  width: 100%;
-  margin: 20px 0;
-}
-
-/* --- Virheilmoitus --- */
-.error-text {
-  color: #ff4444;
-  font-size: 0.9rem;
-  margin-top: 10px;
-}
-
-/* ==========================================================
-   SIVUKOHTAISET RAKENTEET
-   ========================================================== */
-
-/* --- LoginView --- */
-.login-container {
-  min-height: 75vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: var(--background);
-  color: var(--text-primary);
-  padding: 40px 20px;
-}
-
-/* --- AdminDashboard --- */
-.admin-dashboard {
-  min-height: 75vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: var(--background);
-  color: var(--text-primary);
-  padding: 40px 20px;
-  text-align: center;
-}
-
-.admin-box {
-  background-color: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  box-shadow: var(--shadow-soft);
-  padding: 40px 30px;
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-/* --- Admin & User -listat --- */
-.list-container {
-  background-color: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 20px;
-}
-
-.list-item {
-  padding: 10px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.list-item:last-child {
-  border-bottom: none;
-}
-
-.list-item strong {
-  color: var(--accent-turquoise);
-}
-
-.list-actions {
-  margin-top: 8px;
-  display: flex;
-  gap: 10px;
-}
-
-/* ==========================================================
-   RESPONSIIVISUUS
-   ========================================================== */
-@media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    height: auto;
-    padding: 1rem;
+  /* --- PANEELIT --- */
+  .panel {
+    @apply bg-surface border border-border-subtle rounded-2xl shadow-soft p-8 w-full max-w-md mx-auto;
   }
 
-  .header-logo {
-    margin-bottom: 0.5rem;
+  /* --- YHTEISET MUODOT (DRY) --- */
+  /* Tämä varmistaa, että inputit ja napit ovat identtisiä muodoltaan */
+  .shape-base {
+    @apply w-full p-3 rounded-lg text-base transition-all duration-300 outline-none flex items-center justify-center text-center;
   }
 
-  .header-container {
-    padding: 0 20px;
+  /* --- INPUT-KENTÄT --- */
+  .input-field {
+    /* Perustila: Vaalean harmaa kehys, läpinäkyvä tausta, teksti turkoosia */
+    @apply shape-base border-2 border-gray-500 bg-transparent text-accent-turquoise font-medium mb-4;
+  }
+  .input-field::placeholder {
+    /* Aputeksti */
+    @apply text-gray-500 font-normal opacity-70; 
+  }
+  .input-field:focus {
+    /* Valittuna: Turkoosi kehys + heijastus (glow) */
+    @apply border-accent-turquoise shadow-[0_0_15px_rgba(28,177,207,0.5)];
   }
 
-  .button-group {
-    flex-direction: column;
+  /* --- PAINIKKEET (BUTTONS) --- */
+  
+  /* 1. Toimintopainike (Turkoosi) */
+  .btn-action {
+    @apply shape-base bg-accent-turquoise text-white font-bold border-2 border-transparent cursor-pointer;
+  }
+  .btn-action:hover {
+    @apply bg-accent-orange shadow-[0_0_10px_rgba(28,177,207,0.4)] transform scale-[1.02];
+  }
+  /* Disabled tila (esim. latauksen aikana) */
+  .btn-action:disabled {
+    @apply opacity-50 cursor-not-allowed hover:bg-accent-turquoise hover:scale-100 hover:shadow-none;
+  }
+
+  /* 2. Keskeytys/Paluu (Oranssi) */
+  .btn-cancel {
+    @apply shape-base bg-accent-orange text-white font-bold border-2 border-transparent cursor-pointer;
+  }
+  .btn-cancel:hover {
+    @apply bg-accent-turquoise shadow-[0_0_10px_rgba(255,165,0,0.4)] transform scale-[1.02];
+  }
+
+  /* 3. Vastauspainike (Läpinäkyvä) */
+  .btn-answer {
+    @apply shape-base bg-transparent text-white font-normal border-2 border-accent-turquoise cursor-pointer;
+  }
+  .btn-answer:hover {
+    /* Hoverina kehys muuttuu oranssiksi */
+    @apply border-accent-orange text-white shadow-[0_0_10px_rgba(255,165,0,0.3)] transform scale-[1.02];
   }
 }

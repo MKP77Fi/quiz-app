@@ -5,54 +5,62 @@
  * --------------------------
  * Vastaa määrittelydokumentin lukua 5.3 (Admin-toiminnot / Käyttäjähallinta).
  *
- * Näyttää kaikki järjestelmän käyttäjätunnukset.
+ * Näyttää kaikki järjestelmän käyttäjätunnukset kortteina.
  * Mahdollistaa tunnuksen muokkaamisen (esim. salasanan vaihto) tai poistamisen.
  */
 function UserList({ users, onEdit, onDelete }) {
   return (
-    <div className="mt-8">
-      <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">
-        Käyttäjälista
+    <div className="mt-12 w-full max-w-4xl mx-auto">
+      
+      {/* --- OTSIKKO --- */}
+      <h3 className="text-2xl font-display uppercase tracking-wider text-accent-orange mb-6 border-b border-gray-700/50 pb-4">
+        Käyttäjälista ({users.length})
       </h3>
 
       {users.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 bg-gray-900/50 rounded-lg border border-gray-700">
-          <p>Ei käyttäjiä.</p>
+        // --- TYHJÄ LISTA ---
+        <div className="panel text-center py-12">
+          <p className="text-xl text-gray-400 mb-2">Ei käyttäjiä.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        // --- KÄYTTÄJÄKORTIT ---
+        <div className="flex flex-col gap-4">
           {users.map((u) => (
             <div 
               key={u._id} 
-              className="bg-surface border border-gray-700 p-4 rounded-lg shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4"
+              className="bg-gray-900/40 border border-gray-700/50 p-5 rounded-xl hover:border-accent-turquoise/50 transition-colors duration-300 flex flex-col sm:flex-row justify-between items-center gap-6 shadow-sm"
             >
               {/* --- KÄYTTÄJÄN TIEDOT --- */}
-              <div className="flex items-center gap-4 w-full sm:w-auto">
-                {/* Rooli-badge */}
-                <span className={`text-xs px-2 py-1 rounded font-bold uppercase min-w-[80px] text-center ${
+              <div className="flex items-center gap-5 w-full sm:w-auto">
+                
+                {/* Rooli-badge (Neon-tyyli) */}
+                <span className={`text-xs px-3 py-1.5 rounded font-bold uppercase tracking-wider border min-w-[100px] text-center ${
                   u.role === 'admin' 
-                    ? 'bg-purple-900 text-purple-200' 
-                    : 'bg-green-900 text-green-200'
+                    ? 'bg-purple-900/20 border-purple-500/50 text-purple-400' 
+                    : 'bg-green-900/20 border-green-500/50 text-green-400'
                 }`}>
                   {u.role === 'admin' ? 'Ylläpitäjä' : 'Harjoittelija'}
                 </span>
 
-                <strong className="text-lg text-white font-medium truncate">
-                  {u.username}
-                </strong>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Tunnus</span>
+                  <strong className="text-lg text-white font-bold tracking-wide truncate">
+                    {u.username}
+                  </strong>
+                </div>
               </div>
 
               {/* --- TOIMINNOT --- */}
-              <div className="flex gap-2 w-full sm:w-auto justify-end">
+              <div className="flex gap-3 w-full sm:w-auto justify-end">
                 <button 
-                  className="button bg-blue-600 hover:bg-blue-500 text-sm py-1 px-3" 
+                  className="btn-action text-sm py-2 px-4" 
                   onClick={() => onEdit(u)}
                 >
                   ✎ Muokkaa
                 </button>
                 
                 <button
-                  className="button button--danger text-sm py-1 px-3"
+                  className="btn-cancel text-sm py-2 px-4"
                   onClick={() => onDelete(u._id)}
                 >
                   🗑️ Poista
